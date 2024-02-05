@@ -18,6 +18,20 @@ std::vector<double> calculate_wavenumbers(int N, double L) {
     return wavenumbers;
 }
 
+//Function to precalculate the coefficients for the ETD2 method
+void calculate_coeffcients(std::vector<double> kx, std::vector<double> ky, fftw_complex* c_u, fftw_complex* c_v, double mu, double sigma, double Dx, double Dy, double dt, int N) {
+	double k2;
+	for(int i = 0; i < N; i++) {
+		for(int j = 0; j < N; j++) {
+			k2 = -Dx * kx[i] * kx[i] - Dy * ky[j] * ky[j];
+			c_u[i * N + j][0] = exp((k2 - mu) * dt);
+			c_v[i * N + j][0] = exp((k2 + sigma) * dt);
+			c_u[i * N + j][1] = 0;
+			c_v[i * N + j][1] = 0;
+		}
+	}
+}
+
 //Function to calculate magnitude of complex number
 double complex_magnitude(fftw_complex z) {
 	return sqrt(z[0] * z[0] + z[1] * z[1]);

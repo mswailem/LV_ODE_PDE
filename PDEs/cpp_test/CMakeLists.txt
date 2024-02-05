@@ -12,9 +12,11 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(FFTW3 REQUIRED fftw3)
 
 # Add executable
-add_executable(LV_edt2 main.cpp)
+add_executable(solve src/solve.cpp)
+add_executable(fft_test src/fft_test.cpp)
 include_directories(${FFTW3_INCLUDE_DIRS})
 
 # Link FFTW to the executable
-target_link_libraries(LV_edt2 ${FFTW3_LIBRARIES})
+target_link_libraries(solve ${FFTW3_LIBRARIES})
+target_link_libraries(fft_test ${FFTW3_LIBRARIES})
 

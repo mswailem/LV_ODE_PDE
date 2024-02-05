@@ -37,9 +37,9 @@ int main() {
 	double dx = L / N;
     fftw_complex* data = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N * N);
 
-	std::ofstream original_data("data.dat");
-	std::ofstream exact_derivative("exact.dat");
-	std::ofstream derivative_outfile("derivative.dat");
+	std::ofstream original_data("../output/data.dat");
+	std::ofstream exact_derivative("../output/exact.dat");
+	std::ofstream derivative_outfile("../output/derivative.dat");
 	
 	for (int i = 0; i < N; i++) {
 		for (int j = 0; j < N; j++) {
