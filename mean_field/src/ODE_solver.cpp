@@ -44,8 +44,8 @@ int func (double t, const double y[], double f[], void *params) {
 
 int main(int argc, char* argv[]) {
 
-	if (argc < 11) {
-		std::cout << "Required arguments: t_start t_end delta_t a0 b0 k0 k1 n initial_conditions" << std::endl;
+	if (argc < 12) {
+		std::cout << "Required arguments: t_start t_end delta_t a0 b0 k0 k1 n initial_conditions filename" << std::endl;
 		return 0;
 	}
 
@@ -58,15 +58,12 @@ int main(int argc, char* argv[]) {
 	ps[2] = std::stod(argv[6]); // k0
 	ps[3] = std::stod(argv[7]); // k1
 	ps[4] = std::stod(argv[8]); // n
+	std::string filename = argv[11];
 	/* if (K1 > K0 || K0 > 1/(2*(a0+b0))) { cout << "1 must be less than k0 and k0 has to be less than 1/(2*(a0+b0)) otherwise k becomes negative" << endl; return 0; } */
 
     const int points = (int)ceil((t_end-t_start)/dt);
 
-
-	/* char* filename;  */
-	/* filename = new char[100]; */
-	/* sprintf(filename,"output/%g_%g_%g.dat", ps[2], ps[3], ps[4]); */
-	std::ofstream outfile("output/test.dat");
+	std::ofstream outfile("../output/solve/" + filename);
 
 	double t = 0;
 	double y[2] = { std::stod(argv[9]), std::stod(argv[10]) };
@@ -82,5 +79,5 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	gsl_odeiv2_driver_free (d);
-	delete ps;
+	delete[] ps;
 }

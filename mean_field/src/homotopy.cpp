@@ -69,11 +69,11 @@ int main(int argc, char* argv[]) {
 
 	char* filename; 
 	filename = new char[200];
-	sprintf(filename,"output/a0=%g_b0=%g_k0=%g_k1=%g_n=%g_alpha=%g.dat", ps[0], ps[1], ps[2], ps[3], ps[4],ps[5]);
+	sprintf(filename,"../output/homotopy/a0=%g_b0=%g_k0=%g_k1=%g_n=%g_alpha=%g.dat", ps[0], ps[1], ps[2], ps[3], ps[4],ps[5]);
 	std::ofstream outfile(filename);
 	char* filename1; 
 	filename1 = new char[200];
-	sprintf(filename1,"output/a0=%g_b0=%g_k0=%g_k1=%g_n=%g_alpha=%g_fp.dat", ps[0], ps[1], ps[2], ps[3], ps[4],ps[5]);
+	sprintf(filename1,"../output/homotopy/a0=%g_b0=%g_k0=%g_k1=%g_n=%g_alpha=%g_fp.dat", ps[0], ps[1], ps[2], ps[3], ps[4],ps[5]);
 	std::ofstream outfile1(filename1);
 
 	double t = 0;
@@ -100,5 +100,5 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	gsl_odeiv2_driver_free (d);
-	delete ps;
+	delete[] ps;
 }

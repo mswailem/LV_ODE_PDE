@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
 
 	char* filename; 
 	filename = new char[100];
-	sprintf(filename,"output/a0=%g_b0=%g_k0=%g_k1=%g_n=%g.dat", ps[0], ps[1], ps[2], ps[3], ps[4]);
+	sprintf(filename,"../output/chaos_diagram/a0=%g_b0=%g_k0=%g_k1=%g_n=%g.dat", ps[0], ps[1], ps[2], ps[3], ps[4]);
 	std::ofstream outfile(filename);
 
 	ps[5] = 1;
@@ -114,5 +114,5 @@ int main(int argc, char* argv[]) {
 		gsl_odeiv2_driver_free (d);
 		ps[5] = ps[5]-alpha_spacing; // alpha
 	}
-	delete ps;
+	delete[] ps;
 }
