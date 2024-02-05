@@ -1,8 +1,6 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
-#include <sstream>
-#include <vector>
 #include <gsl/gsl_odeiv2.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_matrix.h>
@@ -37,18 +35,75 @@ int func (double t, const double y[], double f[], void *params) {
 	return GSL_SUCCESS;
 }
 
+//This is the function that computes the floquet multipliers
+gsl_matrix* compute_fm(double* ps, int points) {
+		// Variable defintions
+		double t_end = 2*M_PI/((1/ps[4])*omega0(ps[0],ps[1],ps[2]));
+		cout << "t_end: " << t_end << endl;
+		double dt = t_end/points;
+
+		//Allocating memory for gsl variables
+		static gsl_matrix *fundemental_matrix = gsl_matrix_alloc(2, 2);
+
+		//Initial conditions
+		double t = 0;
+		double y[2] = {1,0};
+
+		gsl_odeiv2_system sys = {func, NULL, 2, ps};
+		gsl_odeiv2_driver *diff = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk4, 1e-6, 1e-6, 0.0);
+
+		//Solving the system
+		for (int i = 0; i < points; i++) {
+			int status = gsl_odeiv2_driver_apply (diff, &t, t+dt, y);
+			if (status != GSL_SUCCESS) {
+				printf ("error, return value=%d\n", status);
+				break;
+			}
+		}
+
+		//Assigning the values of the fundemental matrix
+		gsl_matrix_set(fundemental_matrix, 0, 0, y[0]);
+		gsl_matrix_set(fundemental_matrix, 0, 1, y[1]);
+
+		//Resetting initial conditions
+		y[0] = 0;
+		y[1] = 1;
+		t = 0;
+
+		//Solving the system
+		for (int i = 0; i < points; i++) {
+			int status = gsl_odeiv2_driver_apply (diff, &t, t+dt, y);
+			if (status != GSL_SUCCESS) {
+				printf ("error, return value=%d\n", status);
+				break;
+			}
+		}
+
+		//Assigning the values of the fundemental matrix
+		gsl_matrix_set(fundemental_matrix, 1, 0, y[0]);
+		gsl_matrix_set(fundemental_matrix, 1, 1, y[1]);
+
+
+		gsl_odeiv2_driver_free (diff);
+		return fundemental_matrix;
+		gsl_matrix_free(fundemental_matrix);
+}
+
 int main(int argc, char* argv[]) {
 
 	//Checking for correct usage
 	if (argc == 1) {
-		std::cout << "Required arguments: flag_a0_vs_b0 points n_or_k0 step a0 b0" << std::endl;
+		std::cout << "Required arguments: 0=k1_vs_n,1=a0_vs_b0,2=debugging_single points n_or_k0 step a0 b0" << std::endl;
 		return 0;
 	} else if (argc > 1) {
 		if (stoi(argv[1]) == 0 && argc < 7) {
-			std::cout << "Required arguments: flag_a0_vs_b0 points k0 step a0 b0" << std::endl;
+			std::cout << "Required arguments: 0=k1_vs_n,1=a0_vs_b0,2=debugging_single points k0 step a0 b0" << std::endl;
 			return 0;
 		} else if (stoi(argv[1]) == 1 && argc < 5) {
-			std::cout << "Required arguments: flag_a0_vs_b0 points n step" << std::endl;
+			std::cout << "Required arguments: 0=k1_vs_n,1=a0_vs_b0,2=debugging_single points n step" << std::endl;
+			return 0;
+		} else if (stoi(argv[1]) == 2 && argc < 8) {
+			std::cout << "Required arguments: 0=k1_vs_n,1=a0_vs_b0,2=debugging_single points a0 b0 k0 k1 n" << std::endl;
 			return 0;
 		}
 	}
@@ -58,100 +113,46 @@ int main(int argc, char* argv[]) {
 	int points = stoi(argv[2]);
 	int flag_a0_vs_b0 = stoi(argv[1]);
 	/* if (K1 > K0 || K0 > 1/(2*(a0+b0))) { cout << "k1 must be less than k0 and k0 has to be less than 1/(2*(a0+b0)) otherwise k becomes negative" << endl; return 0; } */
+	gsl_vector_complex *floquet_multipliers = gsl_vector_complex_alloc(2);
+	gsl_eigen_nonsymm_workspace *w = gsl_eigen_nonsymm_alloc(2);
+	gsl_matrix *fundemental_matrix = gsl_matrix_alloc(2, 2);
 
 	if (flag_a0_vs_b0 == 0) {
+
 		ps[0] = stod(argv[5]); // a0
 		ps[1] = stod(argv[6]); // b0
 		ps[2] = stod(argv[3]); // k0
 		const double k1_step = stod(argv[4]);
 		std::ofstream output("../output/fm/a0="+(string)argv[5]+"_b0="+(string)argv[6]+"_k0="+(string)argv[3]+".dat");
 
-		// Variable defintions
-		double t_end;
-		double dt;
-
-		//Allocating memory for gsl variables
-		gsl_matrix *fundemental_matrix = gsl_matrix_alloc(2, 2);
-		gsl_vector_complex *floquet_multipliers = gsl_vector_complex_alloc(2);
-		gsl_eigen_nonsymm_workspace *w = gsl_eigen_nonsymm_alloc(2);
-
 		for (int j = 0; j < 200; j++) {
+
 			ps[4] = 0.1+j*0.01; // n
 			ps[3] = k1_step; // k1
+							 //
 			while (ps[3] <= ps[2]) {
-
-				t_end = 2*M_PI/(ps[4]*omega0(ps[0],ps[1],ps[2]));
-				dt = t_end/points;
 
 				cout << " n: " << 0.1+j*0.01 << " K1: " << ps[3] << endl;
 
-				//Initial conditions
-				double t = 0;
-				double y[2] = {1,0};
-
-				gsl_odeiv2_system sys = {func, NULL, 2, ps};
-				gsl_odeiv2_driver *diff = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk4, 1e-6, 1e-6, 0.0);
-
-				//Solving the system
-				for (int i = 0; i < points; i++) {
-					int status = gsl_odeiv2_driver_apply (diff, &t, t+dt, y);
-					if (status != GSL_SUCCESS) {
-						printf ("error, return value=%d\n", status);
-						break;
-					}
-				}
-
-				//Assigning the values of the fundemental matrix
-				gsl_matrix_set(fundemental_matrix, 0, 0, y[0]);
-				gsl_matrix_set(fundemental_matrix, 0, 1, y[1]);
-
-				//Resetting initial conditions
-				y[0] = 0;
-				y[1] = 1;
-				t = 0;
-
-				//Solving the system
-				for (int i = 0; i < points; i++) {
-					int status = gsl_odeiv2_driver_apply (diff, &t, t+dt, y);
-					if (status != GSL_SUCCESS) {
-						printf ("error, return value=%d\n", status);
-						break;
-					}
-				}
-
-				//Assigning the values of the fundemental matrix
-				gsl_matrix_set(fundemental_matrix, 1, 0, y[0]);
-				gsl_matrix_set(fundemental_matrix, 1, 1, y[1]);
-
-				//Computing the floquet multipliers
+				fundemental_matrix = compute_fm(ps, points);
 				gsl_eigen_nonsymm(fundemental_matrix, floquet_multipliers, w);
 
 				if (gsl_complex_abs(gsl_vector_complex_get(floquet_multipliers,0)) > 1 || gsl_complex_abs(gsl_vector_complex_get(floquet_multipliers,1)) > 1) {
 					output << ps[4] << " " << ps[3] << std::endl;
 				}
-				gsl_odeiv2_driver_free (diff);
+
 				ps[3] += k1_step;
 			}
 		}
 
 		//Freeing the memory
 		delete[] ps;
-		gsl_matrix_free(fundemental_matrix);
-		gsl_vector_complex_free(floquet_multipliers);
-		gsl_eigen_nonsymm_free(w);
-	} else {
+	} else if (flag_a0_vs_b0 == 1) {
 		
 		//Variable definitions
 		ps[4] = stod(argv[3]); // n
 		const double b0_step = stod(argv[4]);
-		double t_end;
-		double dt;
 		ofstream output("../output/fm/n="+string(argv[3])+".dat");
-
-		//Allocating memory for gsl variables
-		gsl_matrix *fundemental_matrix = gsl_matrix_alloc(2, 2);
-		gsl_vector_complex *floquet_multipliers = gsl_vector_complex_alloc(2);
-		gsl_eigen_nonsymm_workspace *w = gsl_eigen_nonsymm_alloc(2);
 
 		for (int j = 0; j < 50; j++) {
 
@@ -162,67 +163,42 @@ int main(int argc, char* argv[]) {
 
 				ps[2] = 0.98/(2*(ps[1]+ps[0])); // k0
 				ps[3] = 0.98*ps[2]; // k1
-				t_end = 2*M_PI*ps[4]/(omega0(ps[0],ps[1],ps[2]));
-				dt = t_end/points;
 
 				cout << "a0: " << ps[0] << " b0: " << ps[1] << endl;
 
-				//Initial conditions
-				double t = 0;
-				double y[2] = {1,0};
-
-				gsl_odeiv2_system sys = {func, NULL, 2, ps};
-				gsl_odeiv2_driver *diff = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk4, 1e-6, 1e-6, 0.0);
-
-				//Solving the system
-				for (int i = 0; i < points; i++) {
-					int status = gsl_odeiv2_driver_apply (diff, &t, t+dt, y);
-					if (status != GSL_SUCCESS) {
-						printf ("error, return value=%d\n", status);
-						break;
-					}
-				}
-
-				//Assigning the values of the fundemental matrix
-				gsl_matrix_set(fundemental_matrix, 0, 0, y[0]);
-				gsl_matrix_set(fundemental_matrix, 0, 1, y[1]);
-
-				//Resetting initial conditions
-				y[0] = 0;
-				y[1] = 1;
-				t = 0;
-
-				//Solving the system
-				for (int i = 0; i < points; i++) {
-					int status = gsl_odeiv2_driver_apply (diff, &t, t+dt, y);
-					if (status != GSL_SUCCESS) {
-						printf ("error, return value=%d\n", status);
-						break;
-					}
-				}
-
-				//Assigning the values of the fundemental matrix
-				gsl_matrix_set(fundemental_matrix, 1, 0, y[0]);
-				gsl_matrix_set(fundemental_matrix, 1, 1, y[1]);
-
-				//Computing the floquet multipliers
+				fundemental_matrix = compute_fm(ps, points);
 				gsl_eigen_nonsymm(fundemental_matrix, floquet_multipliers, w);
 
 				if (gsl_complex_abs(gsl_vector_complex_get(floquet_multipliers,0)) > 1 || gsl_complex_abs(gsl_vector_complex_get(floquet_multipliers,1)) > 1) {
 					output << ps[0] << " " << ps[1] << " " << ps[2] << " " << ps[3] << std::endl;
 				}
-				gsl_odeiv2_driver_free (diff);
 				ps[1] += b0_step;
 			}
 		}
 
 		//Freeing the memory
 		delete[] ps;
-		gsl_matrix_free(fundemental_matrix);
-		gsl_vector_complex_free(floquet_multipliers);
-		gsl_eigen_nonsymm_free(w);
+	} else {
+		
+		//Variable definitions
+		ps[0] = stod(argv[3]); // a0
+		ps[1] = stod(argv[4]); // b0
+		ps[2] = stod(argv[5]); // k0
+		ps[3] = stod(argv[6]); // k1
+		ps[4] = stod(argv[7]); // n
+
+		fundemental_matrix = compute_fm(ps, points);
+
+		std::cout << gsl_matrix_get(fundemental_matrix,0,0) << " " << gsl_matrix_get(fundemental_matrix,0,1) << std::endl;
+		std::cout << gsl_matrix_get(fundemental_matrix,1,0) << " " << gsl_matrix_get(fundemental_matrix,1,1) << std::endl;
+
+		//Freeing the memory
+		delete[] ps;
 	}
 
 
+	gsl_vector_complex_free(floquet_multipliers);
+	gsl_matrix_free(fundemental_matrix);
+	gsl_eigen_nonsymm_free(w);
 
 }

@@ -44,8 +44,8 @@ int func (double t, const double y[], double f[], void *params) {
 
 int main(int argc, char* argv[]) {
 
-	if (argc < 7) {
-		std::cout << "Required arguments: points a0 b0 k0 k1 n" << std::endl;
+	if (argc < 8) {
+		std::cout << "Required arguments: points a0 b0 k0 k1 n distance_from_fixed_point" << std::endl;
 		return 0;
 	}
 
@@ -56,35 +56,43 @@ int main(int argc, char* argv[]) {
 	ps[2] = std::stod(argv[4]); // k0
 	ps[3] = std::stod(argv[5]); // k1
 	ps[4] = std::stod(argv[6]); // n
+	const int nn = std::stoi(argv[7]);
 	/* if (K1 > K0 || K0 > 1/(2*(a0+b0))) { cout << "1 must be less than k0 and k0 has to be less than 1/(2*(a0+b0)) otherwise k becomes negative" << endl; return 0; } */
-
-	double t_end =2*M_PI/(ps[4]*omega0(ps[0],ps[1],ps[2])) ;
+	std::ofstream phase_space1("../output/debugging/phase_space1.dat");
+	std::ofstream phase_space2("../output/debugging/phase_space2.dat");
+	std::ofstream test_k("../output/debugging/test_k.dat");
+	double t_end =2*M_PI/((1/ps[4])*omega0(ps[0],ps[1],ps[2]));
+	std::cout << "t_end: " << t_end << std::endl;
 	double dt = t_end/points;
 
 	double t = 0;
-	double y[2] = { ps[0] + std::pow(10,-2) , ps[1] };
+	double y[2] = { ps[0] + std::pow(10,-nn) , ps[1] };
 	gsl_odeiv2_system sys = {func, NULL, 2, ps};
 	gsl_odeiv2_driver *d = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk4, 1e-6, 1e-6, 0.0);
 
+	test_k << t << " " << k(t,ps[2],ps[3],ps[4],ps[0],ps[1]) << std::endl;
 	for (int i = 0; i < points; i++) {
+		phase_space1 << y[0] << " " << y[1] << std::endl;
 		int status = gsl_odeiv2_driver_apply (d, &t, t+dt, y);
 		if (status != GSL_SUCCESS) {
 			printf ("error, return value=%d\n", status);
 			break;
 		}
+		test_k << t << " " << k(t,ps[2],ps[3],ps[4],ps[0],ps[1]) << std::endl;
 	}
-	std::cout << y[0] << " " << y[1] << std::endl;
+	std::cout << std::pow(10,nn)*(y[0]-ps[0]) << " " << std::pow(10,nn)*(y[1]-ps[1]) << std::endl;
 	t = 0;
 	y[0] = ps[0];
+	y[1] = ps[1] + std::pow(10,-nn);
 	for (int i = 0; i < points; i++) {
+		phase_space2 << y[0] << " " << y[1] << std::endl;
 		int status = gsl_odeiv2_driver_apply (d, &t, t+dt, y);
 		if (status != GSL_SUCCESS) {
 			printf ("error, return value=%d\n", status);
 			break;
 		}
 	}
-	std::cout << y[0] << " " << y[1] << std::endl;
-	y[1] = ps[1] + std::pow(10,-2);
+	std::cout << std::pow(10,nn)*(y[0]-ps[0]) << " " << std::pow(10,nn)*(y[1]-ps[1]) << std::endl;
 	gsl_odeiv2_driver_free (d);
-	delete ps;
+	delete[] ps;
 }
