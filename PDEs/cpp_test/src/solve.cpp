@@ -19,15 +19,16 @@ std::vector<double> calculate_wavenumbers(int N, double L) {
 }
 
 //Function to precalculate the coefficients for the ETD2 method
-void calculate_coeffcients(std::vector<double> kx, std::vector<double> ky, fftw_complex* c_u, fftw_complex* c_v, double mu, double sigma, double Dx, double Dy, double dt, int N) {
+void calculate_coeffcients(std::vector<double> kx, std::vector<double> ky, double* c, double* f1, double* f2, double* f3, double* f4 , double r, double Dx, double Dy, double dt, int N) {
 	double k2;
 	for(int i = 0; i < N; i++) {
 		for(int j = 0; j < N; j++) {
 			k2 = -Dx * kx[i] * kx[i] - Dy * ky[j] * ky[j];
-			c_u[i * N + j][0] = exp((k2 - mu) * dt);
-			c_v[i * N + j][0] = exp((k2 + sigma) * dt);
-			c_u[i * N + j][1] = 0;
-			c_v[i * N + j][1] = 0;
+			c[i * N + j] = (k2 + r);
+			f1[i * N + j] = exp(r * dt);
+			f2[i * N + j] = c[i * N + j] == 0 ? dt : (f1[i * N + j] - 1) / c[i * N + j];
+			f3[i * N + j] = c[i * N + j] == 0 ? 1.5*dt : ((1+c[i * N + j]*dt)*f1[i * N + j] - 1 - 2*c[i * N + j]*dt) / (std::pow(c[i * N + j],2)*dt);
+			f4[i * N + j] = c[i * N + j] == 0 ? -0.5*dt : (-f1[i * N + j] + 1 + c[i* N + j]*dt) / (std::pow(c[i * N + j],2)*dt);
 		}
 	}
 }
@@ -86,8 +87,19 @@ int main(int argc, char** argv) {
     fftw_complex* g_x = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N * N);
     fftw_complex* f_k = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N * N);
     fftw_complex* g_k = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N * N);
-    fftw_complex* c_u = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N * N);
-    fftw_complex* c_v = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N * N);
+    /* fftw_complex* c_u = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N * N); */
+    /* fftw_complex* c_v = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N * N); */
+	double* c_u = (double*)malloc(sizeof(double) * N * N);
+	double* c_v = (double*)malloc(sizeof(double) * N * N);
+	double* f1 = (double*)malloc(sizeof(double) * N * N);
+	double* g1 = (double*)malloc(sizeof(double) * N * N);
+	double* f2 = (double*)malloc(sizeof(double) * N * N);
+	double* g2 = (double*)malloc(sizeof(double) * N * N);
+	double* f3 = (double*)malloc(sizeof(double) * N * N);
+	double* g3 = (double*)malloc(sizeof(double) * N * N);
+	double* f4 = (double*)malloc(sizeof(double) * N * N);
+	double* g4 = (double*)malloc(sizeof(double) * N * N);
+
 	
 	//Initial conditions
 	for (int i = 0; i < N; i++) {
@@ -124,6 +136,10 @@ int main(int argc, char** argv) {
 
 
 	//Below I need to precompute the coeffcients for the ETD2 method and then implement the ETDRK2 method
+	std::vector<double> kx = calculate_wavenumbers(N, L);
+	std::vector<double> ky = calculate_wavenumbers(N, L);
+	calculate_coeffcients(kx, ky, c_u, f1, f2, f3, f4, -mu, Dx, Dy, dt, N);
+	calculate_coeffcients(kx, ky, c_v, g1, g2, g3, g4, sigma, Dx, Dy, dt, N);
 
 	return 0;
 }
