@@ -39,7 +39,6 @@ int func (double t, const double y[], double f[], void *params) {
 gsl_matrix* compute_fm(double* ps, int points) {
 		// Variable defintions
 		double t_end = 2*M_PI/((1/ps[4])*omega0(ps[0],ps[1],ps[2]));
-		cout << "t_end: " << t_end << endl;
 		double dt = t_end/points;
 
 		//Allocating memory for gsl variables

@@ -57,6 +57,16 @@ double g(double u, double v, double sigma, double k,  double lambda) {
 	return -sigma * (std::pow(v,2)/k) - lambda * u * v;
 }
 
+//Function to write data to file
+void write_data(std::ofstream& file, fftw_complex* data1, fftw_complex* data2, int N, std::vector<double> xx, std::vector<double> yy) {
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < N; j++) {
+			file << xx[i] << " " << yy[j] << " " << data1[i * N + j][0] << " " << data2[i * N +j][0] << std::endl;
+		}
+		file << std::endl;
+	}
+}
+
 int main(int argc, char** argv) {
 	if (argc < 12) {
 		std::cout << "Required arguments: t_start t_end dt L N mu sigma lambda kk Dx Dy" << std::endl;
@@ -99,24 +109,28 @@ int main(int argc, char** argv) {
 	double* g3 = (double*)malloc(sizeof(double) * N * N);
 	double* f4 = (double*)malloc(sizeof(double) * N * N);
 	double* g4 = (double*)malloc(sizeof(double) * N * N);
+	std::vector<double> xx(N);
+	std::vector<double> yy(N);
+	fftw_plan forward_transform = fftw_plan_dft_2d(N, N, u_x, u_k, FFTW_FORWARD, FFTW_MEASURE | FFTW_PRESERVE_INPUT);
+	fftw_plan backward_transform = fftw_plan_dft_2d(N, N, u_k, u_x, FFTW_BACKWARD, FFTW_MEASURE | FFTW_PRESERVE_INPUT);
 
 	
 	//Initial conditions
 	for (int i = 0; i < N; i++) {
+		xx[i] = i * dx;
 		for (int j = 0; j < N; j++) {
-			double x = i * dx;
-			double y = j * dx;
-			if ( x < L / 2  && y < L / 2) {
+			if (i == 0) {yy[j] = j * dx;}
+			if ( xx[i] < (double)L / 2  && yy[j] < (double)L / 2) {
 				u_x[i * N +j][0] = 1;
 				u_x[i * N +j][1] = 0;
 				v_x[i * N +j][0] = 0;
 				v_x[i * N +j][1] = 0;
-			} else if ( x < L / 2 && y >= L / 2) {
+			} else if ( xx[i] < (double)L / 2 && yy[j] >= (double)L / 2) {
 				u_x[i * N +j][0] = 0;
 				u_x[i * N +j][1] = 0;
 				v_x[i * N +j][0] = 1;
 				v_x[i * N +j][1] = 0;
-			} else if ( x >= L / 2 && y < L / 2) {
+			} else if ( xx[i] >= (double)L / 2 && yy[j] < (double)L / 2) {
 				u_x[i * N +j][0] = 0;
 				u_x[i * N +j][1] = 0;
 				v_x[i * N +j][0] = 1;
@@ -140,6 +154,16 @@ int main(int argc, char** argv) {
 	std::vector<double> ky = calculate_wavenumbers(N, L);
 	calculate_coeffcients(kx, ky, c_u, f1, f2, f3, f4, -mu, Dx, Dy, dt, N);
 	calculate_coeffcients(kx, ky, c_v, g1, g2, g3, g4, sigma, Dx, Dy, dt, N);
+	fftw_execute_dft(forward_transform, u_x, u_k);
+	fftw_execute_dft(forward_transform, v_x, v_k);
+	fftw_execute_dft(forward_transform, f_x, f_k);
+	fftw_execute_dft(forward_transform, g_x, g_k);
+	std::ofstream file("../output/0_x.dat");
+	write_data(file, u_x, v_x, N, xx, yy);
+	file.close();
+	file.open("../output/0_k.dat");
+	write_data(file, u_k, v_k, N, xx, yy);
+	file.close();
 
 	return 0;
 }
