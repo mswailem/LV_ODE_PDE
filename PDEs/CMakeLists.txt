@@ -12,10 +12,16 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(FFTW3 REQUIRED fftw3)
 
 # Add executable
-add_executable(solve src/solve.cpp)
+add_executable(solve src/solve.cpp src/ETD2_solver.cpp)
 add_executable(fft_test src/fft_test.cpp)
-include_directories(${FFTW3_INCLUDE_DIRS})
+include_directories(${FFTW3_INCLUDE_DIRS} include/)
 
+add_custom_target(plot
+    COMMAND gnuplot ${CMAKE_SOURCE_DIR}/scripts/plot.gp
+    DEPENDS solve
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/output
+    COMMENT "Generating plots with Gnuplot"
+)
 # Link FFTW to the executable
 target_link_libraries(solve ${FFTW3_LIBRARIES})
 target_link_libraries(fft_test ${FFTW3_LIBRARIES})

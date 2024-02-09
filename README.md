@@ -21,11 +21,40 @@ debugging_test: Used for debugging purposes only
 
 I might eventually turn this into a software application that users can more easily interact with
 
-For the PDE folder, this is still a work in progress. I have a python implemenmtation but it leads to divergences that should not be there, so instead I am using C++ in the cpp_test folder to solve the system using the FFTW library.
+The PDE foler cotains the C++ code for the spatial model.
 
-This code using exponential time differencing techniques to solve the system by utilizing Fourier Transforms. The C++ code is still a work in progress.
+To run this code, first install FFTW, and then:
 
-To build it, you follow the same steps as above for the mean_field program
+``` mkdir build
+cd build
+cmake ..
+make
+```
+
+Then you can use the terminal command ./solve to run the code, with the parameters of the system specified as arguments.
+
+There is a gnuplot script that can be used to visualize the output of the code.
+
+This can be run using the command:
+
+``` make plot ```
 
 
--- Need to add more details here about how to fetch the output of the code, and add a TODO list
+The raw output of the code is in the output directory (which for now needs to be created by the user, when I come back, I will implement it so that it gets created automatically)
+
+This code using exponential time differencing techniques to solve the system by utilizing Fourier Transforms. 
+
+The C++ code still experiences divergences for some parameter values, due to the densities becoming negative (they should always be positive). I am working on fixing this issue.
+
+But the code still runs for some parameter values, e.g.:
+
+``` ./solve 0 90 0.1 20 64 0.2 1 1 1 1 1 ```
+
+
+TODO:
+	- Change the code so that the system is solved in log-space, to avoid the negative densities issue
+	- Try and fix the the divergence issue
+	- Implement the automatic directory creation
+	- Implement a more user-friendly interface
+	- Implement a GUI
+
