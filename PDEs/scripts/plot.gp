@@ -1,5 +1,6 @@
 set terminal png
 unset key
+system ("mkdir -p ../images")
 system("rm ../images/*")
 rgb(r,g,b) = int(r)*65536 + int(g)*256 + int(b)
 ts=system("ls -v | grep '[[:digit:]]' | grep x | sed 's/.dat//' | sed 's/_x//'")

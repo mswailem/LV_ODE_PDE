@@ -40,7 +40,7 @@ This can be run using the command:
 ``` make plot ```
 
 
-The raw output of the code is in the output directory (which for now needs to be created by the user, when I come back, I will implement it so that it gets created automatically)
+The raw output of the code is in the output directory 
 
 This code using exponential time differencing techniques to solve the system by utilizing Fourier Transforms. 
 
@@ -54,7 +54,6 @@ But the code still runs for some parameter values, e.g.:
 TODO:
 	- Change the code so that the system is solved in log-space, to avoid the negative densities issue
 	- Try and fix the the divergence issue
-	- Implement the automatic directory creation
 	- Implement a more user-friendly interface
 	- Implement a GUI
 

@@ -10,6 +10,8 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
+	system("mkdir -p ../output");
+
 	ETD2_solver solver(std::stod(argv[1]), std::stod(argv[2]), std::stod(argv[3]), std::stod(argv[4]), std::stoi(argv[5]), std::stod(argv[6]), std::stod(argv[7]), std::stod(argv[8]), std::stod(argv[9]), std::stod(argv[10]), std::stod(argv[11]));
 
 	solver.solve();
