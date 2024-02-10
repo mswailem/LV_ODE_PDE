@@ -44,16 +44,24 @@ The raw output of the code is in the output directory
 
 This code using exponential time differencing techniques to solve the system by utilizing Fourier Transforms. 
 
-The C++ code still experiences divergences for some parameter values, due to the densities becoming negative (they should always be positive). I am working on fixing this issue.
+The method can be solved directly in "regular" space, or first transformed into log-coodinates and then solved in "log" space.
 
-But the code still runs for some parameter values, e.g.:
+The log space method ensures that the densities stay positive, however, it seems that both methods yield similar results.
+
+I have implemented two initial conditions:
+
+type 0: discontinous initial conditions where the initial predator and prey are laid out in a checkboard pattern (this leads to divergences in the solutions for some parameter values due to the derivative becoming too large)
+
+type 1: smooth initial conditions where the initial predator and prey are distributed using sines and cosines (this seems to work without divergences)
+
+example run:
 
 ``` ./solve 0 90 0.1 20 64 0.2 1 1 1 1 1 ```
 
 
 TODO:
-	- Change the code so that the system is solved in log-space, to avoid the negative densities issue
-	- Try and fix the the divergence issue
 	- Implement a more user-friendly interface
 	- Implement a GUI
+	- Implement more initial conditions
+	- Implement ETDRK4 stepping
 

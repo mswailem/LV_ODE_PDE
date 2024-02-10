@@ -9,20 +9,25 @@ class ETD2_solver {
 		ETD2_solver(double t_start_init, double t_end_init, double dt_init, double L_init, int N_init, double mu_init, double sigma_init, double lambda_init, double k_init, double Dx_init, double Dy_init);
 		double complex_magnitude(fftw_complex z);
 		void complex_multiply(fftw_complex z, fftw_complex w, fftw_complex result);
-		void solve();
+		void solve_in_log();
+		void solve_in_regular();
 		~ETD2_solver();
 
 	private:
 	//Methods
 	void calculate_wavenumbers();
-	void calculate_coeffcients();
-	void set_initial_conditions();
-	void calculate_non_linear();
+	void calculate_coeffcients_regular();
+	void calculate_coeffcients_log();
+	void set_initial_conditions(int type);
+	void calculate_non_linear_log();
+	void calculate_non_linear_regular();
 	void time_step(bool first_time);
 	void write_data(std::string file_name, bool k_space = false);
 	void transform_forward();
 	void transform_to_k_space();
 	void transform_to_x_space();
+	void transform_to_log_space();
+	void transform_to_regular_space();
 
 	//Variables
 	//Time variables
