@@ -12,16 +12,18 @@ cmake ..
 make
 ```
 
-There are several exectuables that this generates in the build directory:
-ODE_solver - solves the ODE system and generates a files with the densities of the prey and predator populations
-fm: Solves for the Floquet Multipliers
-homotopy: Solves the ODE system with a homotopy parameter, that continually connect the system with a time-independent fixed point and a time-dependent fixed point.
-chaos_diagram: Generates bifrucation diagrams for the system as the homotopy parameter is varied
-debugging_test: Used for debugging purposes only
+Builiding this project produces a main executable that can run perform different computations beased on the first command line argument provided to it.
+
+Here is a list of the different computations that could be performed:
+| Name              | Description | Output |
+|-------------------|:-----------:|-------:|
+| time_series       |    Solves the system for a specific time interval     |  t u(t) v(t) |
+| stability_(var_type) |    Produces the stability diagram of the system as a function of var_type (for example: k1_vs_n)     |  var1 var2 (for example: k1 n) |
+| bifurcation_(var_type) |    Produces the bifurcation diagram of the system as a function of var_type (for example: alpha)     | var ustar vstar (for example: alpha ustar vstar) |
 
 I might eventually turn this into a software application that users can more easily interact with
 
-The PDE foler cotains the C++ code for the spatial model.
+The PDE folder cotains the C++ code for the spatial model.
 
 To run this code, first install FFTW, and then:
 
@@ -61,6 +63,7 @@ example run:
 
 TODO:
 	- Implement a more user-friendly interface
+    - Implement more variables for the bifurcation and stability diagrams
 	- Implement a GUI
 	- Implement more initial conditions
 	- Implement ETDRK4 stepping
