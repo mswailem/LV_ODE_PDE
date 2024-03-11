@@ -11,27 +11,16 @@
 #include <cstdlib>
 #include <cmath>
 
-double t0;
-double tf;
-double dt;
-int t_points;
-double ustar;
-double vstar;
-double k0;
-double k1;
-double n;
-double alpha;
-int points;
-double step;
+double t0, tf, dt, ustar, vstar, k0, k1, n, alpha, step, wavenumber;
+int t_points, points, type;
 std::vector<double> y = {0.0, 0.0};
-int type;
 std::string output_type;
 
 void printUsage(bool failed) { //Prints the usage of the program
     if (output_type == "time_series" && failed) {
 		std::cerr << "Required arguments for time_series: t0 tf dt ustar vstar k0 k1 n alpha initial_conditions" << std::endl;
 	} else if (output_type == "stability_k1_vs_n" && failed) {
-		std::cerr << "Required arguments for stability diagram as a function of k1 and n: points k0 step ustar vstar" << std::endl;
+		std::cerr << "Required arguments for stability diagram as a function of k1 and n: points k0 step ustar vstar wavenumber" << std::endl;
 	} else if (output_type == "stability_ustar_vs_vstar" && failed) {
 		std::cerr << "Required arguments for stability diagram as a function of ustar and vstar: points n step" << std::endl;
 	} else if (output_type == "bifurcation_alpha" && failed) {
@@ -111,7 +100,7 @@ void run_stability(int argc, char* argv[], std::string vars) {
 
 	//Check arguments are correct (might move this to its own function
 	if (vars == "k1_vs_n") {
-		if (argc < 7) {
+		if (argc < 8) {
 			printUsage(true);
 			return;
 		} else {
@@ -121,6 +110,7 @@ void run_stability(int argc, char* argv[], std::string vars) {
 			step = std::stod(argv[4]);
 			ustar = std::stod(argv[5]);
 			vstar = std::stod(argv[6]);
+			wavenumber = std::stod(argv[7]);
 			n = step;
 		}
 	} else if (vars == "ustar_vs_vstar") {
@@ -148,7 +138,7 @@ void run_stability(int argc, char* argv[], std::string vars) {
 	std::system(command.c_str());
 	std::ofstream out_file;
 	if (vars == "k1_vs_n") {
-		out_file.open("../output/fm/" + vars + "/k0=" + std::string(argv[3]) + "_ustar=" + std::string(argv[5]) + "_vtar=" + std::string(argv[6]) + ".dat");
+		out_file.open("../output/fm/" + vars + "/k0=" + std::string(argv[3]) + "_ustar=" + std::string(argv[5]) + "_vtar=" + std::string(argv[6]) + "_wn=" + std::string(argv[7]) + ".dat");
 	} else if (vars == "ustar_vs_vstar") {
 		out_file.open("../output/fm/" + vars + "/n=" + std::string(argv[3]) + ".dat");
 	}
@@ -177,6 +167,7 @@ void run_stability(int argc, char* argv[], std::string vars) {
 			desolver.set_k0(k0);
 			desolver.set_alpha(1);
 			desolver.set_y(1, 0);
+			desolver.set_wavenumber(wavenumber);
 			desolver.initialize();
 
 			//Computing the fundemental matrix and the floquet multipliers
@@ -290,7 +281,7 @@ void run_bifurcation(int argc, char* argv[], std::string vars) { // Still need t
 		points.push_back(std::make_pair(current_u, current_v)); //This will be used to check if the initial time was not enough to capture the transient
 		int repeat_index = 0;
 
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 64; i++) {
 
 			desolver.solve(t0+i*tf, t0+(i+1)*tf, dt);
 			current_u = desolver.get_y()[0];

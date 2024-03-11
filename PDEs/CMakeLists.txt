@@ -6,6 +6,7 @@ project(LV_edt2)
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 # Find the FFTW library
 find_package(PkgConfig REQUIRED)

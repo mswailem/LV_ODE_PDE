@@ -5,17 +5,27 @@
 
 int main(int argc, char** argv) {
 	
-	if (argc < 12) {
-		std::cout << "Required arguments: t_start t_end dt L N mu sigma lambda kk Dx Dy" << std::endl;
+	if (argc < 16) {
+		std::cout << "Required arguments: t_start t_end dt L N ustar vstar k0 k1 n Dx_u Dy_u Dx_v Dy_v t_spacing" << std::endl;
 		return 1;
 	}
 
 	system("mkdir -p ../output");
 	system("rm -f ../output/*");
 
-	ETD2_solver solver(std::stod(argv[1]), std::stod(argv[2]), std::stod(argv[3]), std::stod(argv[4]), std::stoi(argv[5]), std::stod(argv[6]), std::stod(argv[7]), std::stod(argv[8]), std::stod(argv[9]), std::stod(argv[10]), std::stod(argv[11]));
+	//Checking that we are in the physical regime
+	double k0 = std::stod(argv[8]);
+	double k1 = std::stod(argv[9]);
+	double ustar = std::stod(argv[6]);
+	double vstar = std::stod(argv[7]);
+	if (k1 > k0 || k1 > 1/(2*(ustar + vstar))) {
+		std::cout << "Error: k0 must be smaller than k1 and k1 must be smaller than 1/(2*(ustar + vstar))" << std::endl;
+		return 1;
+	}
 
-	solver.solve_in_regular();
+	ETD2_solver solver(std::stod(argv[1]), std::stod(argv[2]), std::stod(argv[3]), std::stod(argv[4]), std::stoi(argv[5]), std::stod(argv[6]), std::stod(argv[7]), std::stod(argv[8]), std::stod(argv[9]), std::stod(argv[10]), std::stod(argv[11]), std::stod(argv[12]), std::stod(argv[13]), std::stod(argv[14]), std::stoi(argv[15]));
+
+	solver.solve_in_log();
 
 	return 0;
 }

@@ -90,14 +90,21 @@ double DESolver::mu() {
 
 int DESolver::full_eq(double t, const double y[], double f[], void *params) {
 	DESolver* solver = static_cast<DESolver*>(params); //This is a pointer to the object that called this function
-	f[0] = y[0]*(solver->lambda()*y[1]-solver->mu());
-	f[1] = y[1]*(1-(y[0]+y[1])*solver->k()-solver->lambda()*y[0]);
-    return GSL_SUCCESS;
+	double cc = solver->k();
+	double m = solver->mu();
+	double l = solver->lambda();
+	f[0] = y[0]*(l*y[1]-m);
+	f[1] = y[1]*(1-(y[0]+y[1])*cc-l*y[0]);
+	return GSL_SUCCESS;
 }
 
 int DESolver::linear_eq (double t, const double y[], double f[], void *params) {
 	DESolver* solver = static_cast<DESolver*>(params); //This is a pointer to the object that called this function
-	f[0] = -(((solver->ustar+solver->vstar)*(solver->k()))-1)*y[1];
-	f[1] = -(solver->vstar/solver->ustar)*((solver->ustar*y[1]-solver->vstar*y[0])*solver->k()+y[0]);
+	double cc = solver->k();
+	double u0 = solver->ustar;
+	double v0 = solver->vstar;
+	double wn = solver->wavenumber;
+	f[0] = -wn*wn*y[0]-(((u0+v0)*cc)-1)*y[1];
+	f[1] = -wn*wn*y[1]-(v0/u0)*((u0*y[1]-v0*y[0])*cc+y[0]);
 	return GSL_SUCCESS;
 }
