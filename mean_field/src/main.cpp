@@ -282,16 +282,40 @@ void run_bifurcation(int argc, char* argv[], std::string vars) { // Still need t
 
 		//Run the initial behavior
 		desolver.solve(0, t0, dt);
-		double u0 = desolver.get_y()[0];
-		double v0 = desolver.get_y()[1];
+		double current_u = desolver.get_y()[0];
+		double current_v = desolver.get_y()[1];
+		std::vector<std::pair<double, double>> points; // Points after transient
+		points.clear(); // Just in case it was not cleared from the previous alpha value
+
+		points.push_back(std::make_pair(current_u, current_v)); //This will be used to check if the initial time was not enough to capture the transient
+		int repeat_index = 0;
 
 		for (int i = 0; i < 100; i++) {
+
 			desolver.solve(t0+i*tf, t0+(i+1)*tf, dt);
-			if (abs(u0 - desolver.get_y()[0]) < 1e-6 && abs(v0 - desolver.get_y()[1]) < 1e-6) {
-				out_file << alpha << " " << desolver.get_y()[0] << " " << desolver.get_y()[1] << std::endl;
-				break;
+			current_u = desolver.get_y()[0];
+			current_v = desolver.get_y()[1];
+
+			// Check if the pattern started repeating after initial behavior
+			repeat_index = 0;
+			for (int j = 0; j < points.size(); j++) {
+				if (std::abs(points[j].first - current_u) < 1e-6 && std::abs(points[j].second - current_v) < 1e-6) {
+					repeat_index = j;
+					break; // Repeating pattern found
+				}
 			}
-			out_file << alpha << " " << desolver.get_y()[0] << " " << desolver.get_y()[1] << std::endl;
+
+
+			// If repetition is found, break the outer loop as well
+			if (repeat_index != 0) break;
+			
+			// Add the current point to the list of points
+			points.push_back({current_u, current_v});
+
+		}
+
+		for (int i = repeat_index; i < points.size(); i++) {
+			out_file << alpha << " " << points[i].first << " " << points[i].second << std::endl;
 		}
 
 		if (vars == "alpha") {
