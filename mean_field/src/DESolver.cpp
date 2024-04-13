@@ -99,12 +99,13 @@ int DESolver::full_eq(double t, const double y[], double f[], void *params) {
 }
 
 int DESolver::linear_eq (double t, const double y[], double f[], void *params) {
+	// TODO: Implement diffusion constan
 	DESolver* solver = static_cast<DESolver*>(params); //This is a pointer to the object that called this function
 	double cc = solver->k();
 	double u0 = solver->ustar;
 	double v0 = solver->vstar;
 	double wn = solver->wavenumber;
-	f[0] = -wn*wn*y[0]-(((u0+v0)*cc)-1)*y[1];
-	f[1] = -wn*wn*y[1]-(v0/u0)*((u0*y[1]-v0*y[0])*cc+y[0]);
+	f[0] = -wn*wn*y[0]-(((u0+v0)*cc)-1)*y[1]; //Implement diffusion constant
+	f[1] = -wn*wn*y[1]-(v0/u0)*((u0*y[1]-v0*y[0])*cc+y[0]); //Implement diffusion constant
 	return GSL_SUCCESS;
 }

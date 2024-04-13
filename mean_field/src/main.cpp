@@ -10,13 +10,19 @@
 #include <gsl/gsl_complex_math.h>
 #include <cstdlib>
 #include <cmath>
+#include "phase.h"
+
+// TODO: Implement the bifurcation diagram for different vairables, and make the pipline more efficient
+// TODO: Maybe move some of these functions to a separate file?
+// TODO: Create a function that automatically checks the inputs, and maybe merge this with printUsage?
 
 double t0, tf, dt, ustar, vstar, k0, k1, n, alpha, step, wavenumber;
 int t_points, points, type;
 std::vector<double> y = {0.0, 0.0};
 std::string output_type;
 
-void printUsage(bool failed) { //Prints the usage of the program
+//Prints the usage of the program
+void printUsage(bool failed) { 
     if (output_type == "time_series" && failed) {
 		std::cerr << "Required arguments for time_series: t0 tf dt ustar vstar k0 k1 n alpha initial_conditions" << std::endl;
 	} else if (output_type == "stability_k1_vs_n" && failed) {
@@ -30,7 +36,8 @@ void printUsage(bool failed) { //Prints the usage of the program
 	}
 }
 
-gsl_matrix* compute_fm(DESolver& solver) { //This computes the fundemental matrix for the system
+//This computes the fundemental matrix for the system
+gsl_matrix* compute_fm(DESolver& solver) { 
 		// Variable defintions
 		tf = solver.get_period();
 		dt = tf/points;
@@ -199,7 +206,8 @@ void run_stability(int argc, char* argv[], std::string vars) {
 	}
 }
 
-void run_bifurcation(int argc, char* argv[], std::string vars) { // Still need to implement different vars
+// TODO: Implement the bifurcation diagram by showing the number of stationairy points as a function of parameters (combinations of alpha, n, and k)
+void run_bifurcation(int argc, char* argv[], std::string vars) { 
 
 	//Check arguments are correct (might move this to its own function)
 	if (vars == "alpha") {
@@ -217,7 +225,8 @@ void run_bifurcation(int argc, char* argv[], std::string vars) { // Still need t
 			n = std::stod(argv[8]);
 			step = std::stod(argv[9]);
 		}
-	} // Still need to implement this for different vars
+	} 
+	// TODO: Still need to implement this for different vars
 
 	/*  else if (vars == "ustar_vs_vstar") { */
 	/* 	if (argc < 5) { */
@@ -242,7 +251,8 @@ void run_bifurcation(int argc, char* argv[], std::string vars) { // Still need t
 	if (vars == "alpha") {
 		out_file.open("../output/bifurcation/" + vars + "/ustar=" + std::string(argv[4]) + "_vstar=" + std::string(argv[5]) + "_k0=" + std::string(argv[6]) + "_k1=" + std::string(argv[7]) + "_n=" + std::string(argv[8]) + ".dat");
 
-	} //Still need to implement this for different vars
+	} 
+	// TODO: Still need to implement this for different vars
 	/* } else if (vars == "ustar_vs_vstar") { */
 /* 	out_file.open("../output/fm/" + vars + "/" + std::string(argv[3]) + ".dat"); */
 /* } */
@@ -252,7 +262,8 @@ void run_bifurcation(int argc, char* argv[], std::string vars) { // Still need t
 		if (vars == "alpha") {
 			std::cout << "alpha=" << alpha << std::endl;
 
-		} // Still need to implement this for different vars
+		}
+		// TODO: Still need to implement this for different vars
 		/* } else if (vars == "ustar_vs_vstar") { */
 			/* 	std::cout << " ustar: " << ustar << " vstar: " << vstar << std::endl; */
 			/* 	k0 = 0.98 * 0.5 * (1/(ustar+vstar)); */
@@ -267,51 +278,16 @@ void run_bifurcation(int argc, char* argv[], std::string vars) { // Still need t
 		desolver.set_k0(k0);
 		desolver.set_alpha(alpha);
 		desolver.set_y(ustar*(1+pow(10,-3)), vstar*(1+pow(10,-3)));
-		desolver.initialize();
-		tf = desolver.get_period();
-		dt = tf/points;
 
-		//Run the initial behavior
-		desolver.solve(0, t0, dt);
-		double current_u = desolver.get_y()[0];
-		double current_v = desolver.get_y()[1];
-		std::vector<std::pair<double, double>> points; // Points after transient
-		points.clear(); // Just in case it was not cleared from the previous alpha value
+		std::vector<std::pair<double, double>> fps = compute_fixed_points(desolver, t0, points, 1e-6);
 
-		points.push_back(std::make_pair(current_u, current_v)); //This will be used to check if the initial time was not enough to capture the transient
-		int repeat_index = 0;
-
-		for (int i = 0; i < 64; i++) {
-
-			desolver.solve(t0+i*tf, t0+(i+1)*tf, dt);
-			current_u = desolver.get_y()[0];
-			current_v = desolver.get_y()[1];
-
-			// Check if the pattern started repeating after initial behavior
-			repeat_index = 0;
-			for (int j = 0; j < points.size(); j++) {
-				if (std::abs(points[j].first - current_u) < 1e-6 && std::abs(points[j].second - current_v) < 1e-6) {
-					repeat_index = j;
-					break; // Repeating pattern found
-				}
-			}
-
-
-			// If repetition is found, break the outer loop as well
-			if (repeat_index != 0) break;
-			
-			// Add the current point to the list of points
-			points.push_back({current_u, current_v});
-
-		}
-
-		for (int i = repeat_index; i < points.size(); i++) {
-			out_file << alpha << " " << points[i].first << " " << points[i].second << std::endl;
+		for (int i = 0; i < fps.size(); i++) {
+			out_file << alpha << " " << fps[i].first << " " << fps[i].second << std::endl;
 		}
 
 		if (vars == "alpha") {
 			alpha -= step;
-		} // Still need to implement this for different vars
+		} // TODO: Still need to implement this for different vars
 		/* } else if (vars == "ustar_vs_vstar") { */
 		/* 	vstar += step; */
 		/* } */
