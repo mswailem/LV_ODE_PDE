@@ -6,6 +6,8 @@
 #include <iostream> //For debugging
 
 
+// TODO: The parameters needed for the linear equation and the nonlinear equation are different, might need to change the initialization and the contrustors of this class
+
 DESolver::DESolver(double Ustar, double Vstar, double K0, double K1, double N, double Alpha, double Y0, double Y1, int Type) :
 	ustar(Ustar), vstar(Vstar), k0(K0), k1(K1), n(N), alpha(Alpha), type(Type)
 {
@@ -99,13 +101,14 @@ int DESolver::full_eq(double t, const double y[], double f[], void *params) {
 }
 
 int DESolver::linear_eq (double t, const double y[], double f[], void *params) {
-	// TODO: Implement diffusion constan
 	DESolver* solver = static_cast<DESolver*>(params); //This is a pointer to the object that called this function
 	double cc = solver->k();
 	double u0 = solver->ustar;
 	double v0 = solver->vstar;
 	double wn = solver->wavenumber;
-	f[0] = -wn*wn*y[0]-(((u0+v0)*cc)-1)*y[1]; //Implement diffusion constant
-	f[1] = -wn*wn*y[1]-(v0/u0)*((u0*y[1]-v0*y[0])*cc+y[0]); //Implement diffusion constant
+	double ddu = solver->diff_u;
+	double ddv = solver->diff_v;
+	f[0] = -ddu*wn*wn*y[0]-(((u0+v0)*cc)-1)*y[1]; //Implement diffusion constant
+	f[1] = -ddv*wn*wn*y[1]-(v0/u0)*((u0*y[1]-v0*y[0])*cc+y[0]); //Implement diffusion constant
 	return GSL_SUCCESS;
 }

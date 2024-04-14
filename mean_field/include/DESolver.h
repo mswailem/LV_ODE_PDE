@@ -17,6 +17,7 @@ class DESolver
 		void set_k0(double K0) { k0 = K0; }
 		void set_k1(double K1) { k1 = K1; }
 		void set_wavenumber(double k) { wavenumber = k; }
+		void set_diff(double d_u, double d_v) {diff_u = d_u; diff_v = d_v;}
 		void set_n(double N) { n = N; }
 		void set_alpha(double Alpha) { alpha = Alpha; }
 		void set_ustar(double Ustar) { ustar = Ustar; }
@@ -32,7 +33,7 @@ class DESolver
 		static int linear_eq (double t, const double y[], double f[], void *params); //This function is static because gsl requires it to be
 
 		int type; //This is the type of equation to solve. 0 for full, 1 for linear
-		double t, ustar, vstar, k0, k1, n, alpha, wavenumber;
+		double t, ustar, vstar, k0, k1, n, alpha, wavenumber, diff_u, diff_v;
 		double omega0, lambda0, mu0;
 		double y[2];
 		gsl_odeiv2_system sys;

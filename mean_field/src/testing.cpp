@@ -1,6 +1,7 @@
 #include <iostream>
 #include <omp.h>
 #include "phase.h"
+#include "theory.h"
 #include <cmath>
 #include <fstream>
 #include <cstdlib>
@@ -13,10 +14,9 @@
 #include <gsl/gsl_complex_math.h>
 
 
-// NOTE: Currently testing the phase plot of k1 vs alpha, will end up refactoring this better into the code 
+// TODO: Will need to move this function somewhere else after refactoring the code
 
-int main (int argc, char *argv[]) {
-
+void phase_space(int argc, char *argv[]){
 	int t0 = std::stoi(argv[1]);
 	int points = std::stoi(argv[2]);
 	double ustar = std::stod(argv[3]);
@@ -38,7 +38,7 @@ int main (int argc, char *argv[]) {
 
 	std::vector<std::pair<double, double>> fps;
 	fps.clear(); // Just in case
-	
+
 	int num_of_points;
 
 	while (alpha >= 0) {
@@ -62,13 +62,55 @@ int main (int argc, char *argv[]) {
 			std::cout << alpha << " " << k1 << std::endl;
 			#pragma omp critical // Protects file writing 
 			{
-			out_file << alpha << " " << k1 << " " << num_of_points << std::endl;
+				out_file << alpha << " " << k1 << " " << num_of_points << std::endl;
 			}
 
 			k1 += step;
 		}
 		alpha -= step;
 	}
+}
+
+
+// NOTE: I am currently implementing the function to get the dispersion relation for the system, will need to move this after refactoring
+
+int main (int argc, char *argv[]) {
+	
+	double du = std::stod(argv[1]);
+	double dv = std::stod(argv[2]);
+
+	double u0 = 1;
+	double v0 = 1;
+	double k0 = 0.245;
+	double wn = 0;
+
+	int points = 20;
+	double wnf = 2;
+	double step = (wnf-wn)/points;
+
+	std::string command = "mkdir -p ../output/testing/eigenvalues";
+	std::system(command.c_str());
+	std::ofstream out_file;
+	out_file.open("../output/testing/eigenvalues/" + std::string(argv[1]) + "_" + std::string(argv[2]) + ".dat");
+
+	#pragma omp parallel for private(wn) shared(out_file)
+	for (int i = 0; i < points; i++) {
+
+		wn = i * step;
+		gsl_vector_complex *eigenvalues = get_eigenvalues(du, dv, u0, v0, k0, wn);
+
+		gsl_complex lambda1 = gsl_vector_complex_get(eigenvalues, 0);
+		gsl_complex lambda2 = gsl_vector_complex_get(eigenvalues, 1);
+
+		// TODO: change writing data as csv files so that it is easier to handle and more transparent
+		#pragma omp critical
+		{
+			out_file << wn << " " << GSL_REAL(lambda1) << " " << GSL_IMAG(lambda1) << " " << GSL_REAL(lambda2) << " " << GSL_IMAG(lambda2) << std::endl;
+		}
+
+		gsl_vector_complex_free(eigenvalues);
+	}
+
 
 	return 0;
 }

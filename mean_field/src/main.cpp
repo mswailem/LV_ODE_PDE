@@ -15,6 +15,7 @@
 // TODO: Implement the bifurcation diagram for different vairables, and make the pipline more efficient
 // TODO: Maybe move some of these functions to a separate file?
 // TODO: Create a function that automatically checks the inputs, and maybe merge this with printUsage?
+// TODO: The parameters of the system can maybe be handeled by a struct instead?
 
 double t0, tf, dt, ustar, vstar, k0, k1, n, alpha, step, wavenumber;
 int t_points, points, type;
