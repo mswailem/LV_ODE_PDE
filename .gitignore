@@ -1,6 +1,3 @@
-**/output/
-**/bin/
-**/images/
-**/gifs/
-**/build/
-*.dat
+compile_commands.json
+build/
+.cache/
