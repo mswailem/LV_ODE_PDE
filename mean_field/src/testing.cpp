@@ -1,10 +1,11 @@
 #include <iostream>
 #include <omp.h>
-#include "phase.h"
+#include "programs.h"
 #include "theory.h"
 #include <cmath>
 #include <fstream>
 #include <cstdlib>
+#include <unordered_map>
 #include <vector>
 #include "DESolver.h"
 #include <gsl/gsl_matrix.h>
@@ -50,13 +51,12 @@ void phase_space(int argc, char *argv[]){
 
 			desolver.set_k1(k1);
 			desolver.set_n(n);
-			desolver.set_ustar(ustar);
-			desolver.set_vstar(vstar);
+			desolver.set_fp(ustar, vstar);
 			desolver.set_k0(k0);
 			desolver.set_alpha(alpha);
 			desolver.set_y(ustar*(1+pow(10,-3)), vstar*(1+pow(10,-3)));
 
-			fps = compute_fixed_points(desolver, t0, points, 1e-4);
+			fps = compute_stationary_points(desolver, t0, points, 1e-4);
 			num_of_points = fps.size();
 
 			std::cout << alpha << " " << k1 << std::endl;
@@ -71,11 +71,9 @@ void phase_space(int argc, char *argv[]){
 	}
 }
 
+// TODO: Will need to move this function somewhere else after refactoring the code
 
-// NOTE: I am currently implementing the function to get the dispersion relation for the system, will need to move this after refactoring
-
-int main (int argc, char *argv[]) {
-	
+void dispersion_relation(int argc, char *argv[]) {
 	double du = std::stod(argv[1]);
 	double dv = std::stod(argv[2]);
 
@@ -110,7 +108,22 @@ int main (int argc, char *argv[]) {
 
 		gsl_vector_complex_free(eigenvalues);
 	}
+}
 
+// NOTE: I am currently implementing the function to get the dispersion relation for the system, will need to move this after refactoring
+
+int main (int argc, char *argv[]) {
+	
+	std::unordered_map<std::string, double> p;
+	p["us"] = 1;
+	p["vs"] = 1;
+	p["k0"] = 0.245;
+	p["k1"] = 0;
+	p["n"] = 0;
+	p["alpha"] = 1;
+	VaryingParam k1 = VaryingParam("k1", 0, 0.245, 0.001);
+	VaryingParam n = VaryingParam("n", 0, 0.57, 0.001);
+	stability(p, n, k1, 1000);
 
 	return 0;
 }

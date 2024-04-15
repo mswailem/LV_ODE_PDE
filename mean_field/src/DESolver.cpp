@@ -5,32 +5,10 @@
 #include <cmath>
 #include <iostream> //For debugging
 
-
-// TODO: The parameters needed for the linear equation and the nonlinear equation are different, might need to change the initialization and the contrustors of this class
-
-DESolver::DESolver(double Ustar, double Vstar, double K0, double K1, double N, double Alpha, double Y0, double Y1, int Type) :
-	ustar(Ustar), vstar(Vstar), k0(K0), k1(K1), n(N), alpha(Alpha), type(Type)
-{
-	omega0 = calculate_omega0();
-	lambda0 = (1/ustar)*(1-(vstar*k0))-(k0); 
-	mu0 = vstar * lambda0;
-	y[0] = Y0;
-	y[1] = Y1;
-	sys.jacobian = NULL;
-	sys.dimension = 2;
-	sys.params = this;
-	if (type == 0) {
-		sys.function = full_eq;
-	} else {
-		sys.function = linear_eq;
-	}
-	d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rkf45, 1e-6, 1e-6, 0.0);
-}
-
 void DESolver::initialize() {
 	omega0 = calculate_omega0();
-	lambda0 = (1/ustar)*(1-(vstar*k0))-(k0); 
-	mu0 = vstar * lambda0;
+	lambda0 = (1/params.us)*(1-(params.vs*params.k0))-(params.k0); 
+	mu0 = params.vs * lambda0;
 }
 
 DESolver::DESolver(int Type) :
@@ -51,11 +29,21 @@ DESolver::~DESolver() {
 	gsl_odeiv2_driver_free(d);
 }
 
+void DESolver::set_params(std::unordered_map<std::string, double> p) {
+	params.us = p["us"];
+	params.vs = p["vs"];
+	params.k0 = p["k0"];
+	params.k1 = p["k1"];
+	params.alpha = p["alpha"];
+	params.n = p["n"];
+	params.wn = p["wn"];
+	params.du = p["du"];
+	params.dv = p["dv"];
+}
+
 std::vector<double> DESolver::get_y() { return {y[0], y[1]}; }
 
-void DESolver::set_y(double Y0, double Y1) { y[0] = Y0; y[1] = Y1; }
-
-double DESolver::get_period() { return 2*M_PI/((1/n)*omega0); }
+double DESolver::get_period() { return 2*M_PI/((1/params.n)*omega0); }
 
 void DESolver::solve(double t_initial, double t_final, double dt) {
 	t = t_initial;
@@ -68,26 +56,26 @@ void DESolver::solve(double t_initial, double t_final, double dt) {
 }
 
 double DESolver::calculate_omega0() {
-	double term1 = (vstar/ustar)*(vstar*k0-1)*(vstar*k0-1);
-	double term2 = 0.25*vstar*k0*(-4+3*vstar*k0);
+	double term1 = (params.vs/params.us)*(params.vs*params.k0-1)*(params.vs*params.k0-1);
+	double term2 = 0.25*params.vs*params.k0*(-4+3*params.vs*params.k0);
 	return sqrt(term1+term2);
 }
 
 double DESolver::lambda() {
-	double lambda1 = (1/ustar)*(1-(vstar*k()))-k();
-	return (1-alpha)*lambda0+alpha*lambda1;
+	double lambda1 = (1/params.us)*(1-(params.vs*k()))-k();
+	return (1-params.alpha)*lambda0+params.alpha*lambda1;
 }
 
 double DESolver::k() {
-	if (n == 0) {
-		return k0;
+	if (params.n == 0) {
+		return params.k0;
 	}
-	return k0+k1*cos((1/n)*t*omega0);
+	return params.k0+params.k1*cos((1/params.n)*t*omega0);
 }
 
 double DESolver::mu() {
-	double mu1 = (vstar/ustar)*(1-(vstar*k()))-(vstar*k());
-	return (1-alpha)*mu0+alpha*mu1;
+	double mu1 = (params.vs/params.us)*(1-(params.vs*k()))-(params.vs*k());
+	return (1-params.alpha)*mu0+params.alpha*mu1;
 }
 
 int DESolver::full_eq(double t, const double y[], double f[], void *params) {
@@ -103,12 +91,12 @@ int DESolver::full_eq(double t, const double y[], double f[], void *params) {
 int DESolver::linear_eq (double t, const double y[], double f[], void *params) {
 	DESolver* solver = static_cast<DESolver*>(params); //This is a pointer to the object that called this function
 	double cc = solver->k();
-	double u0 = solver->ustar;
-	double v0 = solver->vstar;
-	double wn = solver->wavenumber;
-	double ddu = solver->diff_u;
-	double ddv = solver->diff_v;
-	f[0] = -ddu*wn*wn*y[0]-(((u0+v0)*cc)-1)*y[1]; //Implement diffusion constant
-	f[1] = -ddv*wn*wn*y[1]-(v0/u0)*((u0*y[1]-v0*y[0])*cc+y[0]); //Implement diffusion constant
+	double us = solver->params.us;
+	double vs = solver->params.vs;
+	double wn = solver->params.wn;
+	double ddu = solver->params.du;
+	double ddv = solver->params.dv;
+	f[0] = -ddu*wn*wn*y[0]-(((us+vs)*cc)-1)*y[1]; //Implement diffusion constant
+	f[1] = -ddv*wn*wn*y[1]-(vs/us)*((us*y[1]-vs*y[0])*cc+y[0]); //Implement diffusion constant
 	return GSL_SUCCESS;
 }
