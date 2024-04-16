@@ -54,6 +54,43 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 	}
 }
 
+// Creates a bifurcation phase plot for two varying parameters
+inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v1, VaryingParam v2, double t0, int period_points) {
+
+	DESolver desolver(0);
+
+	int points1 = v1.get_num_of_points();
+	int points2 = v2.get_num_of_points();
+
+	std::ofstream out_file = create_outfile("bifurcation", "phase_plot_test.dat");
+
+	int progress = 0;
+	int max_progress = points1 * points2;
+	std::cout << "\r"<< "Progress: " << progress << "/" << max_progress << std::flush;
+
+	std::vector<std::pair<double, double>> fps;
+	int num_of_points;
+	fps.clear(); // Just in case
+	
+	for (int i = 0; i < points1; i++) {
+		p[v2.name] = v2.start;
+		for (int j = 0; j < points2; j++) {
+
+			desolver.set_params(p);
+			desolver.set_y(p["us"]*(1+pow(10,-3)), p["vs"]*(1+pow(10,-3)));
+			fps = compute_stationary_points(desolver, t0, period_points, 1e-4);
+
+			num_of_points = fps.size();
+			out_file << p[v1.name] << " " << p[v2.name] << " " << num_of_points << std::endl;
+
+			p[v2.name] += v2.step;
+			progress++;
+			std::cout << "\r"<< "Progress: " << progress << "/" << max_progress << std::flush;
+		}
+		p[v1.name] += v1.step;
+	}
+}
+
 // Solve the non-linear system of ODEs
 inline void time_series(std::unordered_map<std::string, double> p, double t0, double tf, double dt, std::vector<double> y0) {
 
@@ -112,9 +149,9 @@ inline void stability(std::unordered_map<std::string, double> p, VaryingParam v1
 	gsl_eigen_nonsymm_free(w);
 }
 
-inline void dispersion_relation(std::unordered_map<std::string, double> p, VaryingParam v) {
+inline void dispersion_relation(std::unordered_map<std::string, double> p, VaryingParam v, std::string filename) {
 
-	std::ofstream out_file = create_outfile("dispersion", "test.dat");
+	std::ofstream out_file = create_outfile("dispersion", filename);
 	int points = v.get_num_of_points();
 	int progress = 0;
 	std::cout << "\r" << "Progress: " << progress << "/" << points << std::flush;
@@ -125,6 +162,9 @@ inline void dispersion_relation(std::unordered_map<std::string, double> p, Varyi
 		gsl_complex lambda1 = gsl_vector_complex_get(eigenvalues, 0);
 		gsl_complex lambda2 = gsl_vector_complex_get(eigenvalues, 1);
 		out_file << p[v.name] << " " << GSL_REAL(lambda1) << " " << GSL_IMAG(lambda1) << " " << GSL_REAL(lambda2) << " " << GSL_IMAG(lambda2) << std::endl;
+		progress++;
+		std::cout << "\r" << "Progress: " << progress << "/" << points << std::flush;
+		p[v.name] += v.step;
 	}
 }
 

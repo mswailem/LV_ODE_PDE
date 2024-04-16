@@ -1,5 +1,6 @@
 #include <iostream>
 #include <omp.h>
+#include "iohandler.h"
 #include "programs.h"
 #include "theory.h"
 #include <cmath>
@@ -16,7 +17,7 @@
 
 
 // TODO: Will need to move this function somewhere else after refactoring the code
-
+// NOTE: I am leaving this here for the parallel processing so that I can revisit it and implement it later in my programs.h file
 void phase_space(int argc, char *argv[]){
 	int t0 = std::stoi(argv[1]);
 	int points = std::stoi(argv[2]);
@@ -80,11 +81,11 @@ int main (int argc, char *argv[]) {
 	p["vs"] = 1;
 	p["k0"] = 0.245;
 	p["k1"] = 0;
-	p["n"] = 0;
 	p["alpha"] = 1;
-	VaryingParam k1 = VaryingParam("k1", 0, 0.245, 0.001);
-	VaryingParam n = VaryingParam("n", 0, 0.57, 0.001);
-	stability(p, n, k1, 1000);
+	p["n"] = 0.5;
+	VaryingParam k1 = VaryingParam("k1", 0, 0.245, 0.01);
+	VaryingParam alpha = VaryingParam("alpha", 1, 0, -0.1);
+	bifurcation_diagram(p, k1, alpha, 20000, 1000);
 
 	return 0;
 }
