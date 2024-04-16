@@ -71,45 +71,6 @@ void phase_space(int argc, char *argv[]){
 	}
 }
 
-// TODO: Will need to move this function somewhere else after refactoring the code
-
-void dispersion_relation(int argc, char *argv[]) {
-	double du = std::stod(argv[1]);
-	double dv = std::stod(argv[2]);
-
-	double u0 = 1;
-	double v0 = 1;
-	double k0 = 0.245;
-	double wn = 0;
-
-	int points = 20;
-	double wnf = 2;
-	double step = (wnf-wn)/points;
-
-	std::string command = "mkdir -p ../output/testing/eigenvalues";
-	std::system(command.c_str());
-	std::ofstream out_file;
-	out_file.open("../output/testing/eigenvalues/" + std::string(argv[1]) + "_" + std::string(argv[2]) + ".dat");
-
-	#pragma omp parallel for private(wn) shared(out_file)
-	for (int i = 0; i < points; i++) {
-
-		wn = i * step;
-		gsl_vector_complex *eigenvalues = get_eigenvalues(du, dv, u0, v0, k0, wn);
-
-		gsl_complex lambda1 = gsl_vector_complex_get(eigenvalues, 0);
-		gsl_complex lambda2 = gsl_vector_complex_get(eigenvalues, 1);
-
-		// TODO: change writing data as csv files so that it is easier to handle and more transparent
-		#pragma omp critical
-		{
-			out_file << wn << " " << GSL_REAL(lambda1) << " " << GSL_IMAG(lambda1) << " " << GSL_REAL(lambda2) << " " << GSL_IMAG(lambda2) << std::endl;
-		}
-
-		gsl_vector_complex_free(eigenvalues);
-	}
-}
-
 // NOTE: I am currently implementing the function to get the dispersion relation for the system, will need to move this after refactoring
 
 int main (int argc, char *argv[]) {

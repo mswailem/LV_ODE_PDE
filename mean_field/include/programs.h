@@ -2,6 +2,7 @@
 #define PROGRAMS_H
 
 #include "DESolver.h"
+#include <fstream>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
@@ -109,6 +110,22 @@ inline void stability(std::unordered_map<std::string, double> p, VaryingParam v1
 	gsl_vector_complex_free(floquet_multipliers);
 	gsl_matrix_free(fundemental_matrix);
 	gsl_eigen_nonsymm_free(w);
+}
+
+inline void dispersion_relation(std::unordered_map<std::string, double> p, VaryingParam v) {
+
+	std::ofstream out_file = create_outfile("dispersion", "test.dat");
+	int points = v.get_num_of_points();
+	int progress = 0;
+	std::cout << "\r" << "Progress: " << progress << "/" << points << std::flush;
+
+	for (int i = 0; i < points; i++) {
+		gsl_vector_complex *eigenvalues = get_eigenvalues(p);
+
+		gsl_complex lambda1 = gsl_vector_complex_get(eigenvalues, 0);
+		gsl_complex lambda2 = gsl_vector_complex_get(eigenvalues, 1);
+		out_file << p[v.name] << " " << GSL_REAL(lambda1) << " " << GSL_IMAG(lambda1) << " " << GSL_REAL(lambda2) << " " << GSL_IMAG(lambda2) << std::endl;
+	}
 }
 
 #endif //PROGRAMS_H

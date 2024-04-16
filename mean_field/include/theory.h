@@ -7,6 +7,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_vector_complex_double.h>
+#include <unordered_map>
 #include "DESolver.h"
 
 // Function to compute the long-time stationary points of the system
@@ -53,15 +54,15 @@ inline std::vector<std::pair<double, double>> compute_stationary_points(DESolver
 }
 
 // Compute the eigenvalues of the Jacobian matrix
-inline gsl_vector_complex* get_eigenvalues(double d_u, double d_v, double u0, double v0, double k0, double wn) {
+inline gsl_vector_complex* get_eigenvalues(std::unordered_map<std::string, double> p) {
 
 	gsl_matrix *Jacobian = gsl_matrix_alloc(2, 2);
 	gsl_eigen_nonsymm_workspace *w = gsl_eigen_nonsymm_alloc(2);
 	
-	double a = -d_u*wn*wn;
-	double b = -(u0+v0)*k0+1;
-	double c = (v0*v0/u0)*k0-(v0/u0);
-	double d = -d_v*wn*wn-v0*k0;
+	double a = -p["du"]*p["wn"]*p["wn"];
+	double b = -(p["us"]+p["vs"])*p["k0"]+1;
+	double c = (p["vs"]*p["vs"]/p["us"])*p["k0"]-(p["vs"]/p["us"]);
+	double d = -p["dv"]*p["wn"]*p["wn"]-p["vs"]*p["k0"];
 
 	gsl_matrix_set(Jacobian, 0, 0, a);
 	gsl_matrix_set(Jacobian, 0, 1, b);
