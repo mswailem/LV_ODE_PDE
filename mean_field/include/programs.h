@@ -10,21 +10,6 @@
 #include "theory.h"
 #include "iohandler.h"
 
-// A struct to handle the logic of a varying parameter
-struct VaryingParam {
-	std::string name;
-	double start;
-	double end;
-	double step;
-
-	// Constructor
-	VaryingParam(std::string name, double start, double end, double step) : name(name), start(start), end(end), step(step) {}
-
-	// Get the number of points that this parameter will be varied over
-	int get_num_of_points() {
-		return ceil((end - start) / step);
-	}
-};
 
 // Function to calculate the bifurcation diagram of the non-linear system for a given parameter
 inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v, double t0, int period_points) {

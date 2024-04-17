@@ -76,16 +76,12 @@ void phase_space(int argc, char *argv[]){
 
 int main (int argc, char *argv[]) {
 	
-	std::unordered_map<std::string, double> p;
-	p["us"] = 1;
-	p["vs"] = 1;
-	p["k0"] = 0.245;
-	p["k1"] = 0;
-	p["alpha"] = 1;
-	p["n"] = 0.5;
-	VaryingParam k1 = VaryingParam("k1", 0, 0.245, 0.01);
-	VaryingParam alpha = VaryingParam("alpha", 1, 0, -0.1);
-	bifurcation_diagram(p, k1, alpha, 20000, 1000);
-
+	std::string picked_program_name = fzf_pick(get_program_names(), "Pick program: ");
+	std::cout << "Picked program: " << picked_program_name << std::endl;
+	Program picked_program = get_program(picked_program_name);
+	std::vector<VaryingParam> varying_params = pick_varying_params(picked_program);
+	for (auto const& x : varying_params) {
+		std::cout << x.name << " " << x.start << " " << x.end << " " << x.step << std::endl;
+	}
 	return 0;
 }
