@@ -72,8 +72,6 @@ void phase_space(int argc, char *argv[]){
 	}
 }
 
-// NOTE: I am currently implementing the function to get the dispersion relation for the system, will need to move this after refactoring
-
 int main (int argc, char *argv[]) {
 	
 	std::string picked_program_name = fzf_pick(get_program_names(), "Pick program: ");
@@ -83,5 +81,11 @@ int main (int argc, char *argv[]) {
 	for (auto const& x : varying_params) {
 		std::cout << x.name << " " << x.start << " " << x.end << " " << x.step << std::endl;
 	}
+	std::unordered_map<std::string, double> fixed_params = get_params(picked_program, varying_params);
+	for (auto const& x : fixed_params) {
+		std::cout << x.first << " " << x.second << std::endl;
+	}
+	std::string filename = get_filename();
+	std::cout << "Filename: " << filename << std::endl;
 	return 0;
 }

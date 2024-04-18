@@ -12,13 +12,13 @@
 
 
 // Function to calculate the bifurcation diagram of the non-linear system for a given parameter
-inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v, double t0, int period_points) {
+inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v, double t0, int period_points, std::string filename) {
 	
 	DESolver desolver(0);
 
 	int points = v.get_num_of_points();
 	
-	std::ofstream out_file = create_outfile("bifurcation", "bifurcation_test.dat");
+	std::ofstream out_file = create_outfile("bifurcation", filename);
 	
 	int progress = 0;
 	std::cout << "\r"<< "Progress: " << progress << "/" << points << std::flush;
@@ -40,14 +40,14 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 }
 
 // Creates a bifurcation phase plot for two varying parameters
-inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v1, VaryingParam v2, double t0, int period_points) {
+inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v1, VaryingParam v2, double t0, int period_points, std::string filename) {
 
 	DESolver desolver(0);
 
 	int points1 = v1.get_num_of_points();
 	int points2 = v2.get_num_of_points();
 
-	std::ofstream out_file = create_outfile("bifurcation", "phase_plot_test.dat");
+	std::ofstream out_file = create_outfile("bifurcation", filename);
 
 	int progress = 0;
 	int max_progress = points1 * points2;
@@ -77,7 +77,7 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 }
 
 // Solve the non-linear system of ODEs
-inline void time_series(std::unordered_map<std::string, double> p, double t0, double tf, double dt, std::vector<double> y0) {
+inline void time_series(std::unordered_map<std::string, double> p, double t0, double tf, double dt, std::vector<double> y0, std::string filename) {
 
 	DESolver desolver(0);
 	std::vector<double> y = y0;
@@ -85,7 +85,7 @@ inline void time_series(std::unordered_map<std::string, double> p, double t0, do
 	desolver.set_y(y[0], y[1]);
 	desolver.initialize();
 
-	std::ofstream out_file = create_outfile("time_series", "test.dat");
+	std::ofstream out_file = create_outfile("time_series", filename);
 
 	for (double t = t0; t < tf; t += dt) {
 		std::cout << "\r" << "Progress: " << t << "/" << tf << std::flush;
@@ -99,13 +99,13 @@ inline void time_series(std::unordered_map<std::string, double> p, double t0, do
 
 // NOTE: Might have to change the implementation of this a little bit if the range of the v2 depends on the value of v1
 // Function to calculate the stability diagram as two variables are varied
-inline void stability(std::unordered_map<std::string, double> p, VaryingParam v1, VaryingParam v2, int period_points) {
+inline void stability(std::unordered_map<std::string, double> p, VaryingParam v1, VaryingParam v2, int period_points, std::string filename) {
 
 	DESolver desolver(1);
 	gsl_vector_complex *floquet_multipliers = gsl_vector_complex_alloc(2);
 	gsl_eigen_nonsymm_workspace *w = gsl_eigen_nonsymm_alloc(2);
 	gsl_matrix *fundemental_matrix = gsl_matrix_alloc(2, 2);
-	std::ofstream out_file = create_outfile("stability", "stability_test.dat");
+	std::ofstream out_file = create_outfile("stability", filename);
 
 	int points1 = v1.get_num_of_points();
 	int points2 = v2.get_num_of_points();

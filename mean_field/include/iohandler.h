@@ -29,14 +29,17 @@ struct VaryingParam {
 struct Program {
 	std::string name;
 	std::vector<std::string> required_params;
+	std::vector<std::string> external_params; // Parameters that are can not be varied over
 	int variable_params;
 	int required_variable_params;
 };
 
 // NOTE: For testing, will implement the actual thing later
 inline std::vector<Program> programs = {
-	{"testing", {"t0", "points", "ustar", "k0", "n", "step"}, 2, 2},
-	{"testing2", {"t0", "points", "ustar", "vstar", "k0", "n", "step"}, 2, 1}
+	{"bifurcation diagram", {"us", "vs", "k0", "k1", "n", "alpha"}, {"t0", "points_in_period"}, 2, 1},
+	{"time series", {"us", "vs", "k0", "k1", "n", "alpha"}, {"t0", "tf", "dt", "a0", "b0"}, 0, 0},
+	{"stability", {"us", "vs", "k0", "k1", "n"}, {"points_in_period"}, 2, 2},
+	{"dispersion relation", {"us", "vs", "k0", "du", "dv", "wn"}, {""}, 1, 1}
 };
 
 // Get the names of all the programs
@@ -142,6 +145,8 @@ inline std::vector<VaryingParam> pick_varying_params(Program p) {
 		prompt += "v" + std::to_string(i+1);
 		if (i < p.required_variable_params) {
 			prompt += " (Required)";
+		} else {
+			prompt += " (Optional)";
 		}
 		prompt += " ";
 	}
@@ -166,7 +171,70 @@ inline std::vector<VaryingParam> pick_varying_params(Program p) {
 		std::cin >> start >> end >> step;
 		varying_params.push_back(VaryingParam(x, start, end, step));
 	}
+	// Clearing cin buffer
+	std::cin.clear();
+	std::cin.ignore();
 	return varying_params;
+}
+
+// Function to get the fixed parameters from the user
+inline std::unordered_map<std::string, double> get_params(Program p, std::vector<VaryingParam> varying_params) {
+	std::unordered_map<std::string, double> params;
+	std::vector<std::string> non_varying_params;
+	
+	std::string prompt = "Enter the values separated by spaces for ";
+	for (auto const& x : p.required_params) {
+		bool is_varying = false;
+		for (auto const& vp : varying_params) {
+			if (x == vp.name) {
+				is_varying = true;
+				params[x] = vp.start;
+				break;
+			}
+		}
+		if (!is_varying) {
+			non_varying_params.push_back(x);
+			prompt += x + " ";
+		}
+	}
+	for (auto const& x : p.external_params) {
+		if (x == "") {
+			break;
+		}
+		non_varying_params.push_back(x);
+		prompt += x + " ";
+	}
+	prompt.pop_back(); // Remove the trailing space
+	
+	// Prompt the user for input if there are non-varying parameters
+    if (!non_varying_params.empty()) {
+        std::cout << prompt << std::endl;
+        std::string inputLine;
+        std::getline(std::cin, inputLine);
+        std::istringstream iss(inputLine);
+
+        double value;
+        size_t index = 0;
+        while (iss >> value) {
+            if (index < non_varying_params.size()) {
+                params[non_varying_params[index]] = value;
+                ++index;
+            } else {
+                break; // We have more input values than parameters, ignore excess
+            }
+        }
+    }
+	std::cin.clear();
+	std::cin.ignore();
+	return params;
+}
+
+// Function to get filename
+inline std::string get_filename() {
+	std::string filename;
+	std::cout << "Enter filename: ";
+	std::getline(std::cin, filename);
+	return filename;
 }
 
 #endif // IOHANDLER_H
