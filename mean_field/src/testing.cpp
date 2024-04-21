@@ -15,8 +15,6 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-
-// TODO: Will need to move this function somewhere else after refactoring the code
 // NOTE: I am leaving this here for the parallel processing so that I can revisit it and implement it later in my programs.h file
 void phase_space(int argc, char *argv[]){
 	int t0 = std::stoi(argv[1]);
@@ -72,20 +70,35 @@ void phase_space(int argc, char *argv[]){
 	}
 }
 
+// NOTE: Might change this so that instead each program has a function member variable
+void run_program(Program program, std::unordered_map<std::string, double> params, std::vector<VaryingParam> vs, std::string filename) {
+	if (program.name == "bifurcation diagram") {
+		if (vs.size() == 1) {
+			bifurcation_diagram(params, vs[0], params["t0"], params["points_in_period"], filename);
+		} else if (vs.size() == 2) {
+			bifurcation_diagram(params, vs[0], vs[1], params["t0"], params["points_in_period"], filename);
+		} else {
+			throw std::invalid_argument("Invalid number of varying parameters");
+		}
+	} else if (program.name == "time series") {
+		time_series(params, params["t0"], params["tf"], params["dt"], {params["a0"], params["b0"]}, filename);
+	} else if (program.name == "stability") {
+		stability(params, vs[0], vs[1], params["points_in_period"], filename);
+	} else if (program.name == "dispersion relation") {
+		dispersion_relation(params, vs[0], filename);
+	} else {
+		throw std::invalid_argument("Invalid program name");
+	}
+}
+
+// TODO: Move this to the main.cpp file, and remove the unnecessary includes from all the files
 int main (int argc, char *argv[]) {
 	
 	std::string picked_program_name = fzf_pick(get_program_names(), "Pick program: ");
-	std::cout << "Picked program: " << picked_program_name << std::endl;
 	Program picked_program = get_program(picked_program_name);
 	std::vector<VaryingParam> varying_params = pick_varying_params(picked_program);
-	for (auto const& x : varying_params) {
-		std::cout << x.name << " " << x.start << " " << x.end << " " << x.step << std::endl;
-	}
 	std::unordered_map<std::string, double> fixed_params = get_params(picked_program, varying_params);
-	for (auto const& x : fixed_params) {
-		std::cout << x.first << " " << x.second << std::endl;
-	}
 	std::string filename = get_filename();
-	std::cout << "Filename: " << filename << std::endl;
+	run_program(picked_program, fixed_params, varying_params, filename);
 	return 0;
 }

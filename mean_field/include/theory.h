@@ -9,6 +9,7 @@
 #include <gsl/gsl_vector_complex_double.h>
 #include <unordered_map>
 #include "DESolver.h"
+#include <iostream> //For debugging
 
 // Function to compute the long-time stationary points of the system
 inline std::vector<std::pair<double, double>> compute_stationary_points(DESolver &solver, double t0, int points, double tolerance) {
@@ -78,17 +79,14 @@ inline gsl_vector_complex* get_eigenvalues(std::unordered_map<std::string, doubl
 	return eigenvalues;
 }
 
-inline gsl_matrix* compute_fm(DESolver& solver, double points) { 
+inline void compute_fm(DESolver& solver, double points, gsl_matrix* fundemental_matrix) { 
 		// Variable defintions
+		solver.initialize();
 		double tf = solver.get_period();
 		double dt = tf/points;
 
-		//Allocating memory for gsl variables
-		static gsl_matrix *fundemental_matrix = gsl_matrix_alloc(2, 2);
-
 		//Solving the system for the the (1,0) vector
 		solver.set_y(1, 0);
-		solver.initialize();
 		solver.solve(0, tf, dt);
 		std::vector<double> y = solver.get_y();
 
@@ -105,8 +103,6 @@ inline gsl_matrix* compute_fm(DESolver& solver, double points) {
 		//Assigning the values of the fundemental matrix
 		gsl_matrix_set(fundemental_matrix, 1, 0, y[0]);
 		gsl_matrix_set(fundemental_matrix, 1, 1, y[1]);
-
-		return fundemental_matrix;
 }
 
 #endif //THEORY_H

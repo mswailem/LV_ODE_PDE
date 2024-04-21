@@ -38,7 +38,7 @@ struct Program {
 inline std::vector<Program> programs = {
 	{"bifurcation diagram", {"us", "vs", "k0", "k1", "n", "alpha"}, {"t0", "points_in_period"}, 2, 1},
 	{"time series", {"us", "vs", "k0", "k1", "n", "alpha"}, {"t0", "tf", "dt", "a0", "b0"}, 0, 0},
-	{"stability", {"us", "vs", "k0", "k1", "n"}, {"points_in_period"}, 2, 2},
+	{"stability", {"us", "vs", "k0", "k1", "n", "wn", "du", "dv"}, {"points_in_period"}, 2, 2},
 	{"dispersion relation", {"us", "vs", "k0", "du", "dv", "wn"}, {""}, 1, 1}
 };
 
@@ -138,6 +138,9 @@ inline std::string fzf_pick(std::vector<std::string> options, const std::string 
 
 // Get the user to pick the parameters to vary
 inline std::vector<VaryingParam> pick_varying_params(Program p) {
+	if (p.variable_params == 0) {
+		return {};
+	}
 	std::vector<VaryingParam> varying_params;
 	std::vector<std::string> options = p.required_params;
 	std::string prompt = "Pick varying parameters ";
@@ -224,8 +227,6 @@ inline std::unordered_map<std::string, double> get_params(Program p, std::vector
             }
         }
     }
-	std::cin.clear();
-	std::cin.ignore();
 	return params;
 }
 

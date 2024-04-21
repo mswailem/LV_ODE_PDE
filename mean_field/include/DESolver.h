@@ -29,6 +29,7 @@ class DESolver
 		void set_fp(double Ustar, double Vstar) { params.us = Ustar; params.vs = Vstar;}
 		void set_params(std::unordered_map<std::string, double> p);
 		void initialize();
+		Params get_params() { return params; }
 
 	private:
 		double calculate_omega0();
