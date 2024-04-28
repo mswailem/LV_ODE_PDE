@@ -34,7 +34,6 @@ struct Program {
 	int required_variable_params;
 };
 
-// NOTE: For testing, will implement the actual thing later
 inline std::vector<Program> programs = {
 	{"bifurcation diagram", {"us", "vs", "k0", "k1", "n", "alpha"}, {"t0", "points_in_period"}, 2, 1},
 	{"time series", {"us", "vs", "k0", "k1", "n", "alpha"}, {"t0", "tf", "dt", "a0", "b0"}, 0, 0},
