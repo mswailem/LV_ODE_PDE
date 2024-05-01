@@ -12,6 +12,6 @@ do for [t in ts] {
 	#stats t.'_x.dat' u 3 prefix 'u' nooutput
 	#stats t.'_x.dat' u 4 prefix 'v' nooutput
 	set title "t=".t
-	print t
-	plot t.'_x.dat' u 1:2:(rgb(($3/(u_max))*255,0,($4/v_max)*255)) pt 7 lc rgb variable notitle
+	system("echo -n 'Processing time step: ".t."\r'")
+	plot t.'_x.dat' u 1:2:(rgb(($3/(u_max))*255,0,($4/v_max)*255)) w lines lc rgb variable notitle
 }

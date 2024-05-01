@@ -18,10 +18,17 @@ add_executable(fft_test src/fft_test.cpp)
 include_directories(${FFTW3_INCLUDE_DIRS} include/)
 
 add_custom_target(plot
-    COMMAND gnuplot ${CMAKE_SOURCE_DIR}/scripts/plot.gp
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/plot.py
     DEPENDS solve
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/output
     COMMENT "Generating plots with Gnuplot"
+)
+
+add_custom_target(animate
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/animate.py
+    DEPENDS solve
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/images
+    COMMENT "Generating gif with Gnuplot"
 )
 # Link FFTW to the executable
 target_link_libraries(solve ${FFTW3_LIBRARIES})

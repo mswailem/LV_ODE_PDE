@@ -6,7 +6,7 @@
 
 class ETD2_solver {
 	public:
-		ETD2_solver(double t_start_init, double t_end_init, double dt_init, double L_init, int N_init, double ustar_init, double vstar_init, double k0_init, double k1_init, double n_init, double Dx_u_init, double Dy_u_init, double Dx_v_init, double Dy_v_init, int tt_spacing);
+		ETD2_solver(double t_start_init, double t_end_init, double dt_init, double L_init, int N_init, double ustar_init, double vstar_init, double k0_init, double k1_init, double n_init, double alpha_init, double Dx_u_init, double Dy_u_init, double Dx_v_init, double Dy_v_init, int tt_spacing);
 		double complex_magnitude(fftw_complex z);
 		void complex_multiply(fftw_complex z, fftw_complex w, fftw_complex result);
 		void solve_in_log();
@@ -55,6 +55,7 @@ class ETD2_solver {
 	double Dy_u;
 	double Dx_v;
 	double Dy_v;
+	double alpha;
 
 	fftw_complex* u;
 	fftw_complex* v;

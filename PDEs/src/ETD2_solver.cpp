@@ -8,11 +8,11 @@
 ETD2_solver::ETD2_solver(double t_start_init, double t_end_init, double dt_init,
                          double L_init, int N_init, double ustar_init,
                          double vstar_init, double k0_init, double k1_init,
-                         double n_init, double Dx_u_init, double Dy_u_init,
+                         double n_init, double alpha_init, double Dx_u_init, double Dy_u_init,
                          double Dx_v_init, double Dy_v_init, int tt_spacing)
     : t_start(t_start_init), t_end(t_end_init), dt(dt_init), L(L_init),
       N(N_init), ustar(ustar_init), vstar(vstar_init), k0(k0_init), k1(k1_init),
-      n(n_init), Dx_u(Dx_u_init), Dy_u(Dy_u_init), Dx_v(Dx_v_init),
+      n(n_init), alpha(alpha_init), Dx_u(Dx_u_init), Dy_u(Dy_u_init), Dx_v(Dx_v_init),
       Dy_v(Dy_v_init), t_spacing(tt_spacing), c_u(N * N), c_v(N * N), f1(N * N),
       g1(N * N), f2(N * N), g2(N * N), f3(N * N), g3(N * N), f4(N * N),
       g4(N * N), xx(N), yy(N), kx(N), ky(N) {
@@ -49,11 +49,15 @@ double ETD2_solver::calculate_omega0() {
 }
 
 double ETD2_solver::lambda(double t) {
-  return (1 / ustar) * (1 - (vstar * k(t))) - k(t);
+	double lambda1 = (1 / ustar) * (1 - (vstar * k(t))) - k(t);
+	double lambda0 = (1 / ustar) * (1 - (vstar * k0)) - k0;
+	return (1 - alpha) * lambda0 + alpha * lambda1;
 }
 
 double ETD2_solver::mu(double t) {
-  return (vstar / ustar) * (1 - (vstar * k(t))) - (vstar * k(t));
+	double mu1 = (vstar / ustar) * (1 - (vstar * k(t))) - (vstar * k(t));
+	double mu0 = (vstar / ustar) * (1 - (vstar * k0)) - (vstar * k0);
+	return (1 - alpha) * mu0 + alpha * mu1;
 }
 
 double ETD2_solver::k(double t) {
@@ -400,7 +404,7 @@ void ETD2_solver::solve_in_log() {
     time_step(i == 0);
     transform_to_x_space();
     if (t >= counter) {
-      std::cout << "Writing data at t = " << t << std::endl;
+      std::cout << "Writing data at t = " << t << "\r" << std::flush;
       transform_to_regular_space();
       write_data(std::to_string(counter));
       transform_to_log_space();
