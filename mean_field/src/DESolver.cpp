@@ -68,7 +68,7 @@ double DESolver::get_period() { return 2*M_PI/((1/params.n)*omega0); }
 /* } */
 
 void DESolver::solve(double t_initial, double t_final, double dt) {
-	t = t_initial;
+	double t = t_initial;
 	int status = gsl_odeiv2_driver_apply(d, &t, t_final, y);
 	if (status != GSL_SUCCESS) {
 		std::cerr << "Error: " << gsl_strerror(status) << std::endl;
@@ -81,28 +81,27 @@ double DESolver::calculate_omega0() {
 	return sqrt(term1+term2);
 }
 
-double DESolver::lambda() {
-	double lambda1 = (1/params.us)*(1-(params.vs*k()))-k();
+double DESolver::lambda(double k) {
+	double lambda1 = (1/params.us)*(1-(params.vs*k))-k;
 	return (1-params.alpha)*lambda0+params.alpha*lambda1;
 }
 
-double DESolver::k() {
+double DESolver::k(double t) {
 	if (params.n == 0) {
 		return params.k0;
 	}
 	return params.k0+params.k1*cos((1/params.n)*t*omega0);
 }
 
-double DESolver::mu() {
-	double mu1 = (params.vs/params.us)*(1-(params.vs*k()))-(params.vs*k());
-	return (1-params.alpha)*mu0+params.alpha*mu1;
+double DESolver::mu(double l) {
+	return params.vs*l;
 }
 
 int DESolver::full_eq(double t, const double y[], double f[], void *params) {
 	DESolver* solver = static_cast<DESolver*>(params); //This is a pointer to the object that called this function
-	double cc = solver->k();
-	double m = solver->mu();
-	double l = solver->lambda();
+	double cc = solver->k(t);
+	double l = solver->lambda(cc);
+	double m = solver->mu(l);
 	file << t << " " << y[0] << " " << y[1] << " " << cc << " " << m << " " << l << std::endl;
 	f[0] = y[0]*(l*y[1]-m);
 	f[1] = y[1]*(1-(y[0]+y[1])*cc-l*y[0]);
@@ -111,7 +110,7 @@ int DESolver::full_eq(double t, const double y[], double f[], void *params) {
 
 int DESolver::linear_eq (double t, const double y[], double f[], void *params) {
 	DESolver* solver = static_cast<DESolver*>(params); //This is a pointer to the object that called this function
-	double cc = solver->k();
+	double cc = solver->k(t);
 	double us = solver->params.us;
 	double vs = solver->params.vs;
 	double wn = solver->params.wn;

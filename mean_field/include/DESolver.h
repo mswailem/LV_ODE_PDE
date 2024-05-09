@@ -33,15 +33,14 @@ class DESolver
 
 	private:
 		double calculate_omega0();
-		double lambda();
-		double k();
-		double mu();
+		double lambda(double k);
+		double k(double t);
+		double mu(double l);
 		static int full_eq (double t, const double y[], double f[], void *params); //This function is static because gsl requires it to be
 		static int linear_eq (double t, const double y[], double f[], void *params); //This function is static because gsl requires it to be
 
 		int type; //This is the type of equation to solve. 0 for full, 1 for linear
 		Params params;
-		double t;
 		double omega0, lambda0, mu0;
 		double y[2];
 		gsl_odeiv2_system sys;
