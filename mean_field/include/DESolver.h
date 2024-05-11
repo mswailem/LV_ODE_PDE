@@ -16,7 +16,7 @@ class DESolver
 
 		DESolver(int Type);
 		~DESolver();
-		void solve(double t_initial, double t_final, double dt);
+		void solve(double t_initial, double t_final);
 		std::vector<double> get_y();
 		double get_period();
 		void set_y(double Y0, double Y1) { y[0] = Y0; y[1] = Y1; };

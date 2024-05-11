@@ -17,7 +17,7 @@ void run_program(Program program, std::unordered_map<std::string, double> params
 	} else if (program.name == "time series") {
 		time_series(params, params["t0"], params["tf"], params["dt"], {params["a0"], params["b0"]}, filename);
 	} else if (program.name == "stability") {
-		stability(params, vs[0], vs[1], params["points_in_period"], filename);
+		stability(params, vs[0], vs[1], filename);
 	} else if (program.name == "dispersion relation") {
 		dispersion_relation(params, vs[0], filename);
 	} else {

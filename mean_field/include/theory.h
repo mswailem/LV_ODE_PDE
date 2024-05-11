@@ -12,11 +12,10 @@
 #include <iostream> //For debugging
 
 // Function to compute the long-time stationary points of the system
-inline std::vector<std::pair<double, double>> compute_stationary_points(DESolver &solver, double t0, int points, double tolerance) {
+inline std::vector<std::pair<double, double>> compute_stationary_points(DESolver &solver, double t0, double tolerance) {
 	solver.initialize();
 	double tf = solver.get_period();
-	double dt = tf / points;
-	solver.solve(0, t0, dt);
+	solver.solve(0, t0);
 	double current_u = solver.get_y()[0];
 	double current_v = solver.get_y()[1];
 	std::vector<std::pair<double, double>> fps; // Points after transient
@@ -25,9 +24,9 @@ inline std::vector<std::pair<double, double>> compute_stationary_points(DESolver
 	fps.push_back(std::make_pair(current_u, current_v)); //This will be used to check if the initial time was not enough to capture the transient
 	int repeat_index = 0;
 
-	for (int i = 0; i < 16; i++) {
+	for (int i = 0; i < 4; i++) {
 
-		solver.solve(t0 + i * tf, t0+(i+1)*tf, dt); // Solve for one period
+		solver.solve(t0 + i * tf, t0+(i+1)*tf); // Solve for one period
 		
 		current_u = solver.get_y()[0];
 		current_v = solver.get_y()[1];
@@ -79,15 +78,14 @@ inline gsl_vector_complex* get_eigenvalues(std::unordered_map<std::string, doubl
 	return eigenvalues;
 }
 
-inline void compute_fm(DESolver& solver, double points, gsl_matrix* fundemental_matrix) { 
+inline void compute_fm(DESolver& solver, gsl_matrix* fundemental_matrix) { 
 		// Variable defintions
 		solver.initialize();
 		double tf = solver.get_period();
-		double dt = tf/points;
 
 		//Solving the system for the the (1,0) vector
 		solver.set_y(1, 0);
-		solver.solve(0, tf, dt);
+		solver.solve(0, tf);
 		std::vector<double> y = solver.get_y();
 
 		//Assigning the values of the fundemental matrix
@@ -97,7 +95,7 @@ inline void compute_fm(DESolver& solver, double points, gsl_matrix* fundemental_
 		//Solving the system for the (0,1) vector
 		solver.set_y(0, 1);
 		solver.initialize();
-		solver.solve(0, tf, dt);
+		solver.solve(0, tf);
 		y = solver.get_y();
 
 		//Assigning the values of the fundemental matrix

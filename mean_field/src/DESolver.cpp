@@ -5,17 +5,8 @@
 #include <cmath>
 #include <iostream> //For debugging
 
-// HACK: Remove this include after debugging
-#include <fstream>
-
-std::ofstream file("../output/debugging.dat");
-
-
 // TODO: I disocvered that I have been using an adaptive timestepping method, so get rid of the points and dt throughout
 // The code is still not getting the period doubling accurately, so I also need to fix that
-
-// BUG: I am currently testing the timestepping and algorithm used to solve the system, compare with ~/tests/gsl_test to see if the results are the same, right now they are not. I suspect it could be
-// something with the way I am defining the parameters, I will have to check by printing out debugging statements that show the value for the calculated parameters after each timestep
 
 void DESolver::initialize() {
 	omega0 = calculate_omega0();
@@ -57,17 +48,7 @@ std::vector<double> DESolver::get_y() { return {y[0], y[1]}; }
 
 double DESolver::get_period() { return 2*M_PI/((1/params.n)*omega0); }
 
-/* void DESolver::solve(double t_initial, double t_final, double dt) { */
-/* 	t = t_initial; */
-/* 	while (t < t_final) { */
-/* 		int status = gsl_odeiv2_driver_apply(d, &t, t+dt, y); */
-/* 		if (status != GSL_SUCCESS) { */
-/* 			break; */
-/* 		} */
-/* 	} */
-/* } */
-
-void DESolver::solve(double t_initial, double t_final, double dt) {
+void DESolver::solve(double t_initial, double t_final) {
 	double t = t_initial;
 	int status = gsl_odeiv2_driver_apply(d, &t, t_final, y);
 	if (status != GSL_SUCCESS) {
@@ -102,7 +83,6 @@ int DESolver::full_eq(double t, const double y[], double f[], void *params) {
 	double cc = solver->k(t);
 	double l = solver->lambda(cc);
 	double m = solver->mu(l);
-	file << t << " " << y[0] << " " << y[1] << " " << cc << " " << m << " " << l << std::endl;
 	f[0] = y[0]*(l*y[1]-m);
 	f[1] = y[1]*(1-(y[0]+y[1])*cc-l*y[0]);
 	return GSL_SUCCESS;

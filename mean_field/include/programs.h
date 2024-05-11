@@ -12,6 +12,9 @@
 #include <omp.h>
 
 
+// BUG: There is now an issue with the parallel computing and running bifurcation_diagram, I also suspect this will happen for other programs, could be related to the fact that full_eq is a static function? I will
+// need to debug this, for now I have commented out the parallel computing for bifurcation_diagram
+
 // Function to calculate the bifurcation diagram of the non-linear system for a given parameter
 inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v, double t0, int period_points, std::string filename) {
 
@@ -22,7 +25,7 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 	int progress = 0;
 	std::cout << "\r"<< "Progress: " << progress << "/" << points << std::flush;
 
-	#pragma omp parallel for shared(out_file, progress)
+	/* #pragma omp parallel for shared(out_file, progress) */
 	for (int i = 0; i < points; i++) {
 
 		std::unordered_map<std::string, double> p_local = p;
@@ -33,16 +36,16 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 
 		desolver.set_params(p_local);
 		desolver.set_y(p_local["us"]*(1+pow(10,-3)), p_local["vs"]*(1+pow(10,-3)));
-		std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, t0, period_points, 1e-4);
+		std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, t0, 1e-4);
 
-		#pragma omp critical // Protects file writing 
-		{
+		/* #pragma omp critical // Protects file writing  */
+		/* { */
 			for (int j = 0; j < fps.size(); j++) {
 				out_file << p_value << " " << fps[j].first << " " << fps[j].second << std::endl;
 			}
-		}
+		/* } */
 
-		#pragma omp atomic
+		/* #pragma omp atomic */
 		++progress;
 
 		std::cout << "\rProgress: " << progress << "/" << points << std::flush;
@@ -66,7 +69,7 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 	fps.clear(); // Just in case
 	
 	for (int i = 0; i < points1; i++) {
-		#pragma omp parallel for shared(out_file, progress)
+		/* #pragma omp parallel for shared(out_file, progress) */
 		for (int j = 0; j < points2; j++) {
 			double p_value = v2.start + j*v2.step;
 			std::unordered_map<std::string, double> p_local = p;
@@ -74,15 +77,15 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 			DESolver desolver(0);
 			desolver.set_params(p_local);
 			desolver.set_y(p_local["us"]*(1+pow(10,-3)), p_local["vs"]*(1+pow(10,-3)));
-			fps = compute_stationary_points(desolver, t0, period_points, 1e-4);
+			fps = compute_stationary_points(desolver, t0, 1e-4);
 
 			int num_of_points = fps.size();
-			#pragma omp critical // Protects file writing
-			{
+			/* #pragma omp critical // Protects file writing */
+			/* { */
 			out_file << p_local[v1.name] << " " << p_local[v2.name] << " " << num_of_points << std::endl;
-			}
+			/* } */
 
-			#pragma omp atomic
+			/* #pragma omp atomic */
 			++progress;
 			std::cout << "\r"<< "Progress: " << progress << "/" << max_progress << std::flush;
 		}
@@ -104,7 +107,7 @@ inline void time_series(std::unordered_map<std::string, double> p, double t0, do
 	for (double t = t0; t < tf; t += dt) {
 		std::cout << "\r" << "Progress: " << t << "/" << tf << std::flush;
 		out_file << t << " " << y[0] << " " << y[1] << std::endl;
-		desolver.solve(t, t+dt, dt);
+		desolver.solve(t, t+dt);
 		y = desolver.get_y();
 	}
 	out_file << tf << " " << y[0] << " " << y[1] << std::endl;
@@ -113,7 +116,7 @@ inline void time_series(std::unordered_map<std::string, double> p, double t0, do
 
 // NOTE: Might have to change the implementation of this a little bit if the range of the v2 depends on the value of v1
 // Function to calculate the stability diagram as two variables are varied
-inline void stability(std::unordered_map<std::string, double> p, VaryingParam v1, VaryingParam v2, int period_points, std::string filename) {
+inline void stability(std::unordered_map<std::string, double> p, VaryingParam v1, VaryingParam v2, std::string filename) {
 
 	std::ofstream out_file = create_outfile("stability", filename);
 
@@ -138,7 +141,7 @@ inline void stability(std::unordered_map<std::string, double> p, VaryingParam v1
 			p_local[v2.name] = p_value;
 
 			desolver.set_params(p_local);
-			compute_fm(desolver, period_points, fundemental_matrix);
+			compute_fm(desolver, fundemental_matrix);
 			gsl_eigen_nonsymm(fundemental_matrix, floquet_multipliers, w);
 			bool unstable = gsl_complex_abs(gsl_vector_complex_get(floquet_multipliers,0)) > 1 || gsl_complex_abs(gsl_vector_complex_get(floquet_multipliers,1)) > 1;
 
