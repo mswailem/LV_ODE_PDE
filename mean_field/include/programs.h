@@ -12,11 +12,8 @@
 #include <omp.h>
 
 
-// BUG: There is now an issue with the parallel computing and running bifurcation_diagram, I also suspect this will happen for other programs, could be related to the fact that full_eq is a static function? I will
-// need to debug this, for now I have commented out the parallel computing for bifurcation_diagram
-
 // Function to calculate the bifurcation diagram of the non-linear system for a given parameter
-inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v, double t0, int period_points, std::string filename) {
+inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v, double t0, std::string filename) {
 
 	int points = v.get_num_of_points();
 	
@@ -25,7 +22,7 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 	int progress = 0;
 	std::cout << "\r"<< "Progress: " << progress << "/" << points << std::flush;
 
-	/* #pragma omp parallel for shared(out_file, progress) */
+	#pragma omp parallel for shared(out_file, progress)
 	for (int i = 0; i < points; i++) {
 
 		std::unordered_map<std::string, double> p_local = p;
@@ -38,14 +35,14 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 		desolver.set_y(p_local["us"]*(1+pow(10,-3)), p_local["vs"]*(1+pow(10,-3)));
 		std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, t0, 1e-4);
 
-		/* #pragma omp critical // Protects file writing  */
-		/* { */
+		#pragma omp critical // Protects file writing 
+		{
 			for (int j = 0; j < fps.size(); j++) {
 				out_file << p_value << " " << fps[j].first << " " << fps[j].second << std::endl;
 			}
-		/* } */
+		}
 
-		/* #pragma omp atomic */
+		#pragma omp atomic
 		++progress;
 
 		std::cout << "\rProgress: " << progress << "/" << points << std::flush;
@@ -53,48 +50,55 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 }
 
 // Creates a bifurcation phase plot for two varying parameters
-inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v1, VaryingParam v2, double t0, int period_points, std::string filename) {
+inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v1, VaryingParam v2, double t0, std::string filename) {
+    int points1 = v1.get_num_of_points();
+    int points2 = v2.get_num_of_points();
 
+    std::vector<std::string> results; // Vector to store results for file output
+    int progress = 0;
+    int max_progress = points1 * points2;
+    std::cout << "Progress: " << progress << "/" << max_progress << std::flush;
 
-	int points1 = v1.get_num_of_points();
-	int points2 = v2.get_num_of_points();
+    for (int i = 0; i < points1; i++) {
+        double p_value1 = v1.start + i * v1.step;
+        std::vector<std::string> local_results; // Local vector for each outer loop iteration
 
-	std::ofstream out_file = create_outfile("bifurcation", filename);
+        #pragma omp parallel for shared(local_results, progress)
+        for (int j = 0; j < points2; j++) {
+            double p_value2 = v2.start + j * v2.step;
+            std::unordered_map<std::string, double> p_local = p;
+            p_local[v1.name] = p_value1;
+            p_local[v2.name] = p_value2;
 
-	int progress = 0;
-	int max_progress = points1 * points2;
-	std::cout << "\r"<< "Progress: " << progress << "/" << max_progress << std::flush;
+            DESolver desolver(0);
+            desolver.set_params(p_local);
+            desolver.set_y(p_local["us"]*(1+pow(10,-3)), p_local["vs"]*(1+pow(10,-3)));
+            std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, t0, 1e-4);
 
-	std::vector<std::pair<double, double>> fps;
-	fps.clear(); // Just in case
-	
-	for (int i = 0; i < points1; i++) {
-		/* #pragma omp parallel for shared(out_file, progress) */
-		for (int j = 0; j < points2; j++) {
-			double p_value = v2.start + j*v2.step;
-			std::unordered_map<std::string, double> p_local = p;
-			p_local[v2.name] = p_value;
-			DESolver desolver(0);
-			desolver.set_params(p_local);
-			desolver.set_y(p_local["us"]*(1+pow(10,-3)), p_local["vs"]*(1+pow(10,-3)));
-			fps = compute_stationary_points(desolver, t0, 1e-4);
+            std::string result = std::to_string(p_value1) + " " + std::to_string(p_value2) + " " + std::to_string(fps.size()) + "\n";
 
-			int num_of_points = fps.size();
-			/* #pragma omp critical // Protects file writing */
-			/* { */
-			out_file << p_local[v1.name] << " " << p_local[v2.name] << " " << num_of_points << std::endl;
-			/* } */
+            #pragma omp critical
+            local_results.push_back(result);
 
-			/* #pragma omp atomic */
-			++progress;
-			std::cout << "\r"<< "Progress: " << progress << "/" << max_progress << std::flush;
-		}
-		p[v1.name] += v1.step;
-	}
+            #pragma omp atomic
+            ++progress;
+            std::cout << "\rProgress: " << progress << "/" << max_progress << std::flush;
+        }
+
+        // Combine local results into the main results vector
+        results.insert(results.end(), local_results.begin(), local_results.end());
+    }
+
+    // Write all results to file sequentially outside the parallel region
+    std::ofstream out_file = create_outfile("bifurcation", filename);
+    for (const auto& line : results) {
+        out_file << line;
+    }
+    out_file.close();
 }
 
 // Solve the non-linear system of ODEs
-inline void time_series(std::unordered_map<std::string, double> p, double t0, double tf, double dt, std::vector<double> y0, std::string filename) {
+inline void time_series(std::unordered_map<std::string, double> p, double t0, double tf, double dt, std::vector<double> y0, std::string filename) { // dt is the save frequency of my program, not the timestep used to solve the system
 
 	DESolver desolver(0);
 	std::vector<double> y = y0;

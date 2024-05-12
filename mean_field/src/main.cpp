@@ -8,9 +8,9 @@
 void run_program(Program program, std::unordered_map<std::string, double> params, std::vector<VaryingParam> vs, std::string filename) {
 	if (program.name == "bifurcation diagram") {
 		if (vs.size() == 1) {
-			bifurcation_diagram(params, vs[0], params["t0"], params["points_in_period"], filename);
+			bifurcation_diagram(params, vs[0], params["t0"], filename);
 		} else if (vs.size() == 2) {
-			bifurcation_diagram(params, vs[0], vs[1], params["t0"], params["points_in_period"], filename);
+			bifurcation_diagram(params, vs[0], vs[1], params["t0"], filename);
 		} else {
 			throw std::invalid_argument("Invalid number of varying parameters");
 		}

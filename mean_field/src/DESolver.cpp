@@ -5,8 +5,8 @@
 #include <cmath>
 #include <iostream> //For debugging
 
-// TODO: I disocvered that I have been using an adaptive timestepping method, so get rid of the points and dt throughout
-// The code is still not getting the period doubling accurately, so I also need to fix that
+
+// TODO: I am currently playing around with optimization of the error tolerance and timestepping of my ODE solver
 
 void DESolver::initialize() {
 	omega0 = calculate_omega0();
@@ -25,7 +25,7 @@ DESolver::DESolver(int Type) :
 	} else {
 		sys.function = linear_eq;
 	}
-	d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rkf45, 1e-6, 1e-6, 0.0);
+	d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rkf45, 1e-2, 1e-4, 0.0);
 }
 
 DESolver::~DESolver() {
