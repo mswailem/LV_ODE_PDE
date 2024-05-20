@@ -24,7 +24,7 @@ inline std::vector<std::pair<double, double>> compute_stationary_points(DESolver
 	fps.push_back(std::make_pair(current_u, current_v)); //This will be used to check if the initial time was not enough to capture the transient
 	int repeat_index = 0;
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 32; i++) {
 
 		solver.solve(t0 + i * tf, t0+(i+1)*tf); // Solve for one period
 		

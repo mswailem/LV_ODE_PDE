@@ -25,7 +25,7 @@ DESolver::DESolver(int Type) :
 	} else {
 		sys.function = linear_eq;
 	}
-	d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rkf45, 1e-2, 1e-4, 0.0);
+	d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rkf45, 1e-6, 1e-6, 0.0);
 }
 
 DESolver::~DESolver() {
