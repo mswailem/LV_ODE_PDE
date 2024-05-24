@@ -35,10 +35,10 @@ struct Program {
 };
 
 inline std::vector<Program> programs = {
-	{"bifurcation diagram", {"us", "vs", "k0", "k1", "n", "alpha"}, {"t0"}, 2, 1},
-	{"time series", {"us", "vs", "k0", "k1", "n", "alpha"}, {"t0", "tf", "dt", "a0", "b0"}, 0, 0},
-	{"stability", {"us", "vs", "k0", "k1", "n", "wn", "du", "dv"}, {""}, 2, 2},
-	{"dispersion relation", {"us", "vs", "k0", "du", "dv", "wn"}, {""}, 1, 1}
+	{"bifurcation diagram", {"vs", "k0", "k1", "n", "alpha"}, {"t0"}, 2, 1},
+	{"time series", {"vs", "k0", "k1", "n", "alpha"}, {"t0", "tf", "dt", "a0", "b0"}, 0, 0},
+	{"stability", {"vs", "k0", "k1", "n", "wn", "du", "dv"}, {""}, 2, 2},
+	{"dispersion relation", {"vs", "k0", "du", "dv", "wn"}, {""}, 1, 1}
 };
 
 // Get the names of all the programs

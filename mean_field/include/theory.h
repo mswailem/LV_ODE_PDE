@@ -60,8 +60,8 @@ inline gsl_vector_complex* get_eigenvalues(std::unordered_map<std::string, doubl
 	gsl_eigen_nonsymm_workspace *w = gsl_eigen_nonsymm_alloc(2);
 	
 	double a = -p["du"]*p["wn"]*p["wn"];
-	double b = -(p["us"]+p["vs"])*p["k0"]+1;
-	double c = (p["vs"]*p["vs"]/p["us"])*p["k0"]-(p["vs"]/p["us"]);
+	double b = -(1+p["vs"])*p["k0"]+1;
+	double c = (p["vs"]*p["vs"])*p["k0"]-(p["vs"]);
 	double d = -p["dv"]*p["wn"]*p["wn"]-p["vs"]*p["k0"];
 
 	gsl_matrix_set(Jacobian, 0, 0, a);

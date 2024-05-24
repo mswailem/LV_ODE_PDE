@@ -32,7 +32,7 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 		DESolver desolver(0);
 
 		desolver.set_params(p_local);
-		desolver.set_y(p_local["us"]*(1+pow(10,-3)), p_local["vs"]*(1+pow(10,-3)));
+		desolver.set_y(1+pow(10,-3), p_local["vs"]*(1+pow(10,-3)));
 		std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, t0, 1e-4);
 
 		#pragma omp critical // Protects file writing 
@@ -72,7 +72,7 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 
             DESolver desolver(0);
             desolver.set_params(p_local);
-            desolver.set_y(p_local["us"]*(1+pow(10,-3)), p_local["vs"]*(1+pow(10,-3)));
+            desolver.set_y(1+pow(10,-3), p_local["vs"]*(1+pow(10,-3)));
             std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, t0, 1e-4);
 
             std::string result = std::to_string(p_value1) + " " + std::to_string(p_value2) + " " + std::to_string(fps.size()) + "\n";

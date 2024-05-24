@@ -10,7 +10,7 @@
 
 void DESolver::initialize() {
 	omega0 = calculate_omega0();
-	lambda0 = (1/params.us)*(1-(params.vs*params.k0))-(params.k0); 
+	lambda0 = 1-(params.vs*params.k0)-(params.k0); 
 	mu0 = params.vs * lambda0;
 }
 
@@ -33,7 +33,6 @@ DESolver::~DESolver() {
 }
 
 void DESolver::set_params(std::unordered_map<std::string, double> p) {
-	params.us = p["us"];
 	params.vs = p["vs"];
 	params.k0 = p["k0"];
 	params.k1 = p["k1"];
@@ -57,13 +56,13 @@ void DESolver::solve(double t_initial, double t_final) {
 }
 
 double DESolver::calculate_omega0() {
-	double term1 = (params.vs/params.us)*(params.vs*params.k0-1)*(params.vs*params.k0-1);
+	double term1 = (params.vs)*(params.vs*params.k0-1)*(params.vs*params.k0-1);
 	double term2 = 0.25*params.vs*params.k0*(-4+3*params.vs*params.k0);
 	return sqrt(term1+term2);
 }
 
 double DESolver::lambda(double k) {
-	double lambda1 = (1/params.us)*(1-(params.vs*k))-k;
+	double lambda1 = 1-(params.vs*k)-k;
 	return (1-params.alpha)*lambda0+params.alpha*lambda1;
 }
 
@@ -91,12 +90,11 @@ int DESolver::full_eq(double t, const double y[], double f[], void *params) {
 int DESolver::linear_eq (double t, const double y[], double f[], void *params) {
 	DESolver* solver = static_cast<DESolver*>(params); //This is a pointer to the object that called this function
 	double cc = solver->k(t);
-	double us = solver->params.us;
 	double vs = solver->params.vs;
 	double wn = solver->params.wn;
 	double ddu = solver->params.du;
 	double ddv = solver->params.dv;
-	f[0] = -ddu*wn*wn*y[0]-(((us+vs)*cc)-1)*y[1]; //Implement diffusion constant
-	f[1] = -ddv*wn*wn*y[1]-(vs/us)*((us*y[1]-vs*y[0])*cc+y[0]); //Implement diffusion constant
+	f[0] = -ddu*wn*wn*y[0]-(((1+vs)*cc)-1)*y[1]; //Implement diffusion constant
+	f[1] = -ddv*wn*wn*y[1]-(vs)*((y[1]-vs*y[0])*cc+y[0]); //Implement diffusion constant
 	return GSL_SUCCESS;
 }

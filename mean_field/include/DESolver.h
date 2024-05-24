@@ -7,7 +7,7 @@
 #include <string>
 
 struct Params {
-	double us, vs, k0, k1, alpha, n, wn, du, dv;
+	double vs, k0, k1, alpha, n, wn, du, dv;
 };
 
 class DESolver
@@ -26,7 +26,7 @@ class DESolver
 		void set_diff(double d_u, double d_v) {params.du = d_u; params.dv = d_v;}
 		void set_n(double N) { params.n = N; }
 		void set_alpha(double Alpha) { params.alpha = Alpha; }
-		void set_fp(double Ustar, double Vstar) { params.us = Ustar; params.vs = Vstar;}
+		void set_fp(double Vstar) { params.vs = Vstar;}
 		void set_params(std::unordered_map<std::string, double> p);
 		void initialize();
 		Params get_params() { return params; }
