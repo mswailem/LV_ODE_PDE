@@ -1,6 +1,7 @@
 #ifndef IOHANDLER_H
 #define IOHANDLER_H
 
+#include "theory.h"
 #include <cmath>
 #include <iostream>
 #include <vector>
@@ -9,6 +10,10 @@
 #include <unordered_map>
 #include <sstream>
 #include <iomanip>
+#include <stdexcept>
+#include <array>
+#include <memory>
+#include <cstdio>
 
 // A struct to handle the logic of a varying parameter
 struct VaryingParam {
@@ -16,14 +21,31 @@ struct VaryingParam {
 	double start;
 	double end;
 	double step;
+	std::vector<double> values;
 
 	// Constructor
-	VaryingParam(std::string name, double start, double end, double step) : name(name), start(start), end(end), step(step) {}
+	VaryingParam(std::string name, double start, double end, double step) : name(name), start(start), end(end), step(step) {
+		set_values();
+	}
+
+	void set_values() {
+		if (step == 0) {
+			throw std::invalid_argument("Step size can not be zero");
+		}
+		if (end >= 0) {
+			for (double i = start; i <= end; i += step) {
+				values.push_back(i);
+			}
+		} else {
+			return;
+		}
+	}
 
 	// Get the number of points that this parameter will be varied over
 	int get_num_of_points() {
 		return ceil((end - start) / step);
 	}
+
 };
 
 struct Program {
@@ -35,10 +57,10 @@ struct Program {
 };
 
 inline std::vector<Program> programs = {
-	{"bifurcation diagram", {"vs", "k0", "k1", "n", "alpha"}, {"t0"}, 2, 1},
-	{"time series", {"vs", "k0", "k1", "n", "alpha"}, {"t0", "tf", "dt", "a0", "b0"}, 0, 0},
-	{"stability", {"vs", "k0", "k1", "n", "wn", "du", "dv"}, {""}, 2, 2},
-	{"dispersion relation", {"vs", "k0", "du", "dv", "wn"}, {""}, 1, 1}
+	{"bifurcation diagram", {"us", "k0", "k1", "n", "alpha", "da", "db"}, {""}, 2, 1},
+	{"time series", {"us", "k0", "k1", "n", "alpha"}, {"t0", "tf", "a0", "b0"}, 0, 0},
+	{"stability", {"us", "k0", "k1", "n", "wn", "du", "dv"}, {""}, 2, 2},
+	{"dispersion relation", {"us", "k0", "du", "dv", "wn"}, {""}, 1, 1}
 };
 
 // Get the names of all the programs
@@ -169,7 +191,11 @@ inline std::vector<VaryingParam> pick_varying_params(Program p) {
     }
 	for (auto const& x : choices) {
 		double start, end, step;
-		std::cout << "Enter the start, end and step (separated by spaces) for " << x << ": " << std::endl;
+		if (x == "k0" || x == "k1" ) {
+			std::cout << "Enter the start, end and step (separated by spaces) for " << x << ": (enter negative number to make this parameter run to its maximum allowed value)" << std::endl;
+		} else {
+			std::cout << "Enter the start, end and step (separated by spaces) for " << x << ": " << std::endl;
+		}
 		std::cin >> start >> end >> step;
 		varying_params.push_back(VaryingParam(x, start, end, step));
 	}
@@ -235,6 +261,28 @@ inline std::string get_filename() {
 	std::cout << "Enter filename: ";
 	std::getline(std::cin, filename);
 	return filename;
+}
+
+inline VaryingParam handle_max_inputs(std::unordered_map<std::string, double> &p, VaryingParam v) {
+	if (v.end < 0) {
+		if (v.name == "k0") {
+			if (p.find("us") == p.end()) {
+				throw std::invalid_argument("us parameter is required to compute the maximum value of k0");
+			}
+			v.end = max_k0(p["us"]);
+			v.set_values();
+			return v;
+		} else if (v.name == "k1") {
+			if (p.find("us") == p.end() || p.find("k0") == p.end() || p.find("n") == p.end()) {
+				throw std::invalid_argument("us, k0 and n parameters are required to compute the maximum value of k1");
+			} else {
+				v.end = max_k1(p["us"], p["k0"], p["alpha"]);
+				v.set_values();
+				return v;
+			}
+		}
+	}
+	return v;
 }
 
 #endif // IOHANDLER_H

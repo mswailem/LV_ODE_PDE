@@ -12,77 +12,68 @@
 #include <omp.h>
 
 
+// TODO: I added the option to handle the cases where I want k0 and k1 to run to their maximum values, check what I have done in the stability program, also implement this in the other programs
+
+
 // Function to calculate the bifurcation diagram of the non-linear system for a given parameter
 inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v, double t0, std::string filename) {
 
-	int points = v.get_num_of_points();
-	
 	std::ofstream out_file = create_outfile("bifurcation", filename);
 	
-	int progress = 0;
-	std::cout << "\r"<< "Progress: " << progress << "/" << points << std::flush;
+	VaryingParam v_local = handle_max_inputs(p, v);
 
-	#pragma omp parallel for shared(out_file, progress)
-	for (int i = 0; i < points; i++) {
-
+	#pragma omp parallel for shared(out_file)
+	for (auto &v_value : v_local.values) {
 		std::unordered_map<std::string, double> p_local = p;
-		double p_value = v.start + i*v.step;
-		p_local[v.name] = p_value;
+		p_local[v.name] = v_value;
 
 		DESolver desolver(0);
 
 		desolver.set_params(p_local);
-		desolver.set_y(1+pow(10,-3), p_local["vs"]*(1+pow(10,-3)));
-		std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, t0, 1e-4);
+		if (!desolver.check_param_region()) {
+			continue;
+		}
+		desolver.set_y(p_local["us"]+p_local["da"], 1+p_local["db"]);
+		std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, 1e-3);
 
 		#pragma omp critical // Protects file writing 
 		{
 			for (int j = 0; j < fps.size(); j++) {
-				out_file << p_value << " " << fps[j].first << " " << fps[j].second << std::endl;
+				out_file << v_value << " " << fps[j].first << " " << fps[j].second << std::endl;
 			}
 		}
-
-		#pragma omp atomic
-		++progress;
-
-		std::cout << "\rProgress: " << progress << "/" << points << std::flush;
 	}
 }
 
 // Creates a bifurcation phase plot for two varying parameters
 inline void bifurcation_diagram(std::unordered_map<std::string, double> p, VaryingParam v1, VaryingParam v2, double t0, std::string filename) {
-    int points1 = v1.get_num_of_points();
-    int points2 = v2.get_num_of_points();
 
     std::vector<std::string> results; // Vector to store results for file output
-    int progress = 0;
-    int max_progress = points1 * points2;
-    std::cout << "Progress: " << progress << "/" << max_progress << std::flush;
+	VaryingParam v1_local = handle_max_inputs(p, v1);
 
-    for (int i = 0; i < points1; i++) {
-        double p_value1 = v1.start + i * v1.step;
+    for (auto &v1_value : v1_local.values) {
+		p[v1.name] = v1_value;
         std::vector<std::string> local_results; // Local vector for each outer loop iteration
+		VaryingParam v2_local = handle_max_inputs(p, v2);
 
-        #pragma omp parallel for shared(local_results, progress)
-        for (int j = 0; j < points2; j++) {
-            double p_value2 = v2.start + j * v2.step;
+        #pragma omp parallel for shared(local_results)
+        for (auto &v2_value : v2_local.values) {
             std::unordered_map<std::string, double> p_local = p;
-            p_local[v1.name] = p_value1;
-            p_local[v2.name] = p_value2;
+            p_local[v1.name] = v1_value;
+            p_local[v2.name] = v2_value;
 
             DESolver desolver(0);
             desolver.set_params(p_local);
-            desolver.set_y(1+pow(10,-3), p_local["vs"]*(1+pow(10,-3)));
-            std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, t0, 1e-4);
+			if (!desolver.check_param_region()) {
+				continue;
+			}
+            desolver.set_y(p_local["us"]+p_local["da"], 1+p_local["db"]);
+            std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, 1e-6);
 
-            std::string result = std::to_string(p_value1) + " " + std::to_string(p_value2) + " " + std::to_string(fps.size()) + "\n";
-
+            std::string result = std::to_string(p_local[v1.name]) + " " + std::to_string(p_local[v2.name]) + " " + std::to_string(fps.size()) + "\n";
+			
             #pragma omp critical
             local_results.push_back(result);
-
-            #pragma omp atomic
-            ++progress;
-            std::cout << "\rProgress: " << progress << "/" << max_progress << std::flush;
         }
 
         // Combine local results into the main results vector
@@ -98,18 +89,27 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 }
 
 // Solve the non-linear system of ODEs
-inline void time_series(std::unordered_map<std::string, double> p, double t0, double tf, double dt, std::vector<double> y0, std::string filename) { // dt is the save frequency of my program, not the timestep used to solve the system
+inline void time_series(std::unordered_map<std::string, double> p, double t0, double tf, std::vector<double> y0, std::string filename) { // dt is the save frequency of my program, not the timestep used to solve the system
 
 	DESolver desolver(0);
 	std::vector<double> y = y0;
+	if (p["k1"] < 0) { 
+		p["k1"] = 0.98*max_k1(p["us"], p["k0"], p["alpha"]);
+	}
 	desolver.set_params(p);
+	if (!desolver.check_param_region()) {
+		throw std::runtime_error("Parameters are outside of the physical oscillatoy region");
+	}
 	desolver.set_y(y[0], y[1]);
 	desolver.initialize();
+	double dt = desolver.get_period()/100;
+	int num_of_periods = ceil(tf);
 
 	std::ofstream out_file = create_outfile("time_series", filename);
 
-	for (double t = t0; t < tf; t += dt) {
-		std::cout << "\r" << "Progress: " << t << "/" << tf << std::flush;
+	for (int i = 0; i < num_of_periods*100; i++) {
+		double t = t0 + i*dt;
+		std::cout << "\r" << "Progress: " << i << "/" << num_of_periods*100 << std::flush;
 		out_file << t << " " << y[0] << " " << y[1] << std::endl;
 		desolver.solve(t, t+dt);
 		y = desolver.get_y();
@@ -121,30 +121,54 @@ inline void time_series(std::unordered_map<std::string, double> p, double t0, do
 // NOTE: Might have to change the implementation of this a little bit if the range of the v2 depends on the value of v1
 // Function to calculate the stability diagram as two variables are varied
 inline void stability(std::unordered_map<std::string, double> p, VaryingParam v1, VaryingParam v2, std::string filename) {
-
 	std::ofstream out_file = create_outfile("stability", filename);
 
-	int points1 = v1.get_num_of_points();
-	int points2 = v2.get_num_of_points();
-	int max_progress = points1 * points2;
-	int progress = 0;
+	// Stability analysis only makes sense for alpha = 1
+	p["alpha"] = 1;
 
-	std::cout << "\r" << "Progress: " << progress << "/" << max_progress << std::flush;
-	for (int i = 0; i < points1; i++) {
+	/* int points1 = v1.get_num_of_points(); */
+	/* int points2 = v2.get_num_of_points(); */
+	VaryingParam v1_local = handle_max_inputs(p, v1);
 
-		#pragma omp parallel for shared(out_file, progress)
-		for (int j = 0; j < points2; j++) {
+	// TODO: Since implementing the option that k0 and k1 can be varied up to their maximum value, my current implementation of max progress would not work in general, so I need to find a better way to implement it
+	/* int max_progress = points1 * points2; */
+	/* int progress = 0; */
+	/*  */
+	/* std::cout << "\r" << "Progress: " << progress << "/" << max_progress << std::flush; */
 
+	for (auto &v1_value : v1_local.values) {
+		p[v1.name] = v1_value;
+		VaryingParam v2_local = handle_max_inputs(p, v2);
+
+		/* #pragma omp parallel for shared(out_file, progress) */
+
+		#pragma omp parallel for shared(out_file)
+		for (auto &v2_value : v2_local.values) {
 			gsl_vector_complex *floquet_multipliers = gsl_vector_complex_alloc(2);
 			gsl_eigen_nonsymm_workspace *w = gsl_eigen_nonsymm_alloc(2);
 			gsl_matrix *fundemental_matrix = gsl_matrix_alloc(2, 2);
 
 			DESolver desolver(1);
-			double p_value = v2.start + j*v2.step;
 			std::unordered_map<std::string, double> p_local = p;
-			p_local[v2.name] = p_value;
+			p_local[v2.name] = v2_value;
+
+			// TODO: Find a better way to do this, maybe I can define a function that does somewhere and then call it here?
+			// Check if k1 should be equal to close maximum value or not
+			
+			if (p_local["k1"] < 0) { 
+				p_local["k1"] = 0.98*max_k1(p_local["us"], p_local["k0"], p_local["alpha"]);
+			}
 
 			desolver.set_params(p_local);
+			if (!desolver.check_param_region()) {
+				/* #pragma omp atomic */
+				/* ++progress; */
+				/* std::cout << "\r" << "Progress: " << progress << "/" << max_progress << std::flush; */
+				gsl_vector_complex_free(floquet_multipliers);
+				gsl_matrix_free(fundemental_matrix);
+				gsl_eigen_nonsymm_free(w);
+				continue;
+			}
 			compute_fm(desolver, fundemental_matrix);
 			gsl_eigen_nonsymm(fundemental_matrix, floquet_multipliers, w);
 			bool unstable = gsl_complex_abs(gsl_vector_complex_get(floquet_multipliers,0)) > 1 || gsl_complex_abs(gsl_vector_complex_get(floquet_multipliers,1)) > 1;
@@ -156,14 +180,13 @@ inline void stability(std::unordered_map<std::string, double> p, VaryingParam v1
 				}
 			}
 
-			#pragma omp atomic
-			++progress;
-			std::cout << "\r" << "Progress: " << progress << "/" << max_progress << std::flush;
+			/* #pragma omp atomic */
+			/* ++progress; */
+			/* std::cout << "\r" << "Progress: " << progress << "/" << max_progress << std::flush; */
 			gsl_vector_complex_free(floquet_multipliers);
 			gsl_matrix_free(fundemental_matrix);
 			gsl_eigen_nonsymm_free(w);
 		}
-		p[v1.name] += v1.step;
 	}
 }
 
