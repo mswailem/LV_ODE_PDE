@@ -22,7 +22,8 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 	
 	VaryingParam v_local = handle_max_inputs(p, v);
 
-	#pragma omp parallel for shared(out_file)
+	std::vector<double> y0 = {p["us"]+p["da"], 1+p["db"]};
+
 	for (auto &v_value : v_local.values) {
 		std::unordered_map<std::string, double> p_local = p;
 		p_local[v.name] = v_value;
@@ -33,14 +34,12 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 		if (!desolver.check_param_region()) {
 			continue;
 		}
-		desolver.set_y(p_local["us"]+p_local["da"], 1+p_local["db"]);
+		desolver.set_y(y0[0], y0[1]);
 		std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, 1e-3);
+		y0 = {fps[0].first + p_local["da"], fps[0].second + p_local["db"]};
 
-		#pragma omp critical // Protects file writing 
-		{
-			for (int j = 0; j < fps.size(); j++) {
-				out_file << v_value << " " << fps[j].first << " " << fps[j].second << std::endl;
-			}
+		for (int j = 0; j < fps.size(); j++) {
+			out_file << v_value << " " << fps[j].first << " " << fps[j].second << std::endl;
 		}
 	}
 }
@@ -56,7 +55,6 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
         std::vector<std::string> local_results; // Local vector for each outer loop iteration
 		VaryingParam v2_local = handle_max_inputs(p, v2);
 
-        #pragma omp parallel for shared(local_results)
         for (auto &v2_value : v2_local.values) {
             std::unordered_map<std::string, double> p_local = p;
             p_local[v1.name] = v1_value;
@@ -72,7 +70,6 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 
             std::string result = std::to_string(p_local[v1.name]) + " " + std::to_string(p_local[v2.name]) + " " + std::to_string(fps.size()) + "\n";
 			
-            #pragma omp critical
             local_results.push_back(result);
         }
 
