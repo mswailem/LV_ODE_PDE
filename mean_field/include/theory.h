@@ -13,7 +13,7 @@
 #include <iostream> //For debugging
 
 // Function to compute the long-time stationary points of the system
-inline std::vector<std::pair<double, double>> compute_stationary_points(DESolver &solver, double tolerance) {
+inline std::vector<std::pair<double, double>> compute_stationary_points(DESolver &solver, double tolerance) { // TODO: Make this function handle the case where n=0
 	solver.initialize();
 	double tf = solver.get_period();
 	double t0 = tf*500;
@@ -31,7 +31,7 @@ inline std::vector<std::pair<double, double>> compute_stationary_points(DESolver
 	fps.push_back(std::make_pair(current_u, current_v)); //This will be used to check if the initial time was not enough to capture the transient
 	int repeat_index = 0;
 
-	for (int i = 0; i < 32; i++) {
+	for (int i = 0; i < 12; i++) {
 
 		solver.solve(t0 + i * tf, t0+(i+1)*tf); // Solve for one period
 		

@@ -49,13 +49,17 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 
     std::vector<std::string> results; // Vector to store results for file output
 	VaryingParam v1_local = handle_max_inputs(p, v1);
+	std::vector<double> y0;
+
 
     for (auto &v1_value : v1_local.values) {
 		p[v1.name] = v1_value;
         std::vector<std::string> local_results; // Local vector for each outer loop iteration
 		VaryingParam v2_local = handle_max_inputs(p, v2);
+		y0 = {p["us"]+p["da"], 1+p["db"]};
 
         for (auto &v2_value : v2_local.values) {
+			std::cout << "\r" << "Progress: " << v1_value << " " << v2_value << "/" << v1_local.end << " " << v2_local.end << std::flush;
             std::unordered_map<std::string, double> p_local = p;
             p_local[v1.name] = v1_value;
             p_local[v2.name] = v2_value;
@@ -65,8 +69,9 @@ inline void bifurcation_diagram(std::unordered_map<std::string, double> p, Varyi
 			if (!desolver.check_param_region()) {
 				continue;
 			}
-            desolver.set_y(p_local["us"]+p_local["da"], 1+p_local["db"]);
-            std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, 1e-6);
+            desolver.set_y(y0[0], y0[1]);
+            std::vector<std::pair<double, double>> fps = compute_stationary_points(desolver, 1e-3);
+			y0 = {fps[0].first + p_local["da"], fps[0].second + p_local["db"]};
 
             std::string result = std::to_string(p_local[v1.name]) + " " + std::to_string(p_local[v2.name]) + " " + std::to_string(fps.size()) + "\n";
 			
