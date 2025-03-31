@@ -1,4 +1,3 @@
-#include <cstdio>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -16,7 +15,7 @@ void run_program(Program program, std::unordered_map<std::string, double> params
 			throw std::invalid_argument("Invalid number of varying parameters");
 		}
 	} else if (program.name == "time series") {
-		time_series(params, params["t0"], params["tf"], {params["a0"], params["b0"]}, filename);
+		time_series(params, params["t0"], params["tf"], params["dt"], {params["a0"], params["b0"]}, filename);
 	} else if (program.name == "stability") {
 		stability(params, vs[0], vs[1], filename);
 	} else if (program.name == "dispersion relation") {

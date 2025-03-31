@@ -21,7 +21,7 @@ DESolver::DESolver(int Type) :
 	} else {
 		sys.function = linear_eq;
 	}
-	d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rkf45, 1e-6, 1e-10, 1e-10);
+	d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rkf45, 1e-6, 1e-6, 0.0);
 }
 
 DESolver::~DESolver() {
@@ -75,13 +75,8 @@ int DESolver::full_eq(double t, const double y[], double f[], void *params) {
 	double l = solver->lambda(cc);
 	f[0] = y[0]*l*(y[1]-1);
 	f[1] = y[1]*(1-(y[0]+y[1])*cc-l*y[0]);
-	// Handling round-off error, otherwise the solution at the fixed point might move away from the fixed point
-	/* f[0] = abs(f[0]) < 1e-10 ? 0 : f[0]; */
-	/* f[1] = abs(f[1]) < 1e-10 ? 0 : f[1]; */
-
 	return GSL_SUCCESS;
 }
-
 
 int DESolver::linear_eq (double t, const double y[], double f[], void *params) {
 	DESolver* solver = static_cast<DESolver*>(params); //This is a pointer to the object that called this function

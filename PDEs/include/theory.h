@@ -1,7 +1,6 @@
 #ifndef THEORY_H
 #define THEORY_H
 
-#include <cmath>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector_complex.h>
 #include <gsl/gsl_eigen.h>
@@ -13,19 +12,10 @@
 #include <iostream> //For debugging
 
 // Function to compute the long-time stationary points of the system
-inline std::vector<std::pair<double, double>> compute_stationary_points(DESolver &solver, double tolerance) { // TODO: Make this function handle the case where n=0
+inline std::vector<std::pair<double, double>> compute_stationary_points(DESolver &solver, double t0, double tolerance) {
 	solver.initialize();
 	double tf = solver.get_period();
-	int num_periods = 10000;
-	int dt_inv = 1;
-	double t0 = tf*num_periods;
-	double dt = tf/dt_inv;
-	/* for (int i = 0; i < num_periods*dt_inv; i++) { */
-	/* 	solver.solve(dt*i, dt*(i+1)); */
-	/* } */
-	for (int i = 0; i < num_periods; i++) {
-		solver.solve(i*tf, (i+1)*tf);
-	}
+	solver.solve(0, t0);
 	double current_u = solver.get_y()[0];
 	double current_v = solver.get_y()[1];
 	std::vector<std::pair<double, double>> fps; // Points after transient
@@ -34,7 +24,7 @@ inline std::vector<std::pair<double, double>> compute_stationary_points(DESolver
 	fps.push_back(std::make_pair(current_u, current_v)); //This will be used to check if the initial time was not enough to capture the transient
 	int repeat_index = 0;
 
-	for (int i = 0; i < 12; i++) {
+	for (int i = 0; i < 32; i++) {
 
 		solver.solve(t0 + i * tf, t0+(i+1)*tf); // Solve for one period
 		
@@ -91,13 +81,6 @@ inline gsl_vector_complex* get_eigenvalues(std::unordered_map<std::string, doubl
 inline void compute_fm(DESolver& solver, gsl_matrix* fundemental_matrix) { 
 		// Variable defintions
 		solver.set_alpha(1); // Stability only makes sense for alpha=1
-		if (solver.get_params().k0 == 0) {
-			gsl_matrix_set(fundemental_matrix, 0, 0, 1);
-			gsl_matrix_set(fundemental_matrix, 0, 1, 0);
-			gsl_matrix_set(fundemental_matrix, 1, 0, 0);
-			gsl_matrix_set(fundemental_matrix, 1, 1, 1);
-			return;
-		}
 		solver.initialize();
 		double tf = solver.get_period();
 
@@ -119,19 +102,6 @@ inline void compute_fm(DESolver& solver, gsl_matrix* fundemental_matrix) {
 		//Assigning the values of the fundemental matrix
 		gsl_matrix_set(fundemental_matrix, 1, 0, y[0]);
 		gsl_matrix_set(fundemental_matrix, 1, 1, y[1]);
-}
-
-inline double max_k0(double us) {
-	double term1 = us*(1+us);
-	double term2 = us+2-sqrt(term1);
-	double term3 = 3*us+4;
-	return 2*term2/term3;
-}
-
-inline double max_k1(double us, double k0, double alpha) {
-	double term1 = 1-(1+us)*k0;
-	double term2 = alpha*(1+us);
-	return std::min(term1/term2, k0);
 }
 
 #endif //THEORY_H

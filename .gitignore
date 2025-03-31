@@ -3,4 +3,7 @@ build/
 .cache/
 output/
 images/
+images_k_u/
+images_k_v/
 plots/
+packages/

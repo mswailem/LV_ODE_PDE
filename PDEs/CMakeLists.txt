@@ -24,6 +24,27 @@ add_custom_target(plot
     COMMENT "Generating plots with Gnuplot"
 )
 
+add_custom_target(plot_k_u
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/plot_k_u.py
+    DEPENDS solve
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/output
+    COMMENT "Generating plots with Gnuplot"
+)
+
+add_custom_target(compute_std
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/compute_std.py
+    DEPENDS solve
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/output
+	COMMENT "Computing std as a function of time"
+)
+
+add_custom_target(plot_k_v
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/plot_k_v.py
+    DEPENDS solve
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/output
+    COMMENT "Generating plots with Gnuplot"
+)
+
 add_custom_target(animate
     COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/animate.py
     DEPENDS solve

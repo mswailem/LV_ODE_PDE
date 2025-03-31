@@ -3,11 +3,10 @@
 #include <fftw3.h>
 #include <string>
 #include <vector>
-#include <random>
 
 class ETD2_solver {
 	public:
-		ETD2_solver(double t_start_init, int t_end_init, double L_init, int N_init, double ustar_init, double k0_init, double k1_init, double n_init, double alpha_init, double D_init, double tt_spacing);
+		ETD2_solver(double t_start_init, double t_end_init, double dt_init, double L_init, int N_init, double ustar_init, double vstar_init, double k0_init, double k1_init, double n_init, double alpha_init, double Dx_u_init, double Dy_u_init, double Dx_v_init, double Dy_v_init, int tt_spacing);
 		double complex_magnitude(fftw_complex z);
 		void complex_multiply(fftw_complex z, fftw_complex w, fftw_complex result);
 		void solve_in_log();
@@ -19,7 +18,7 @@ class ETD2_solver {
 	void calculate_wavenumbers();
 	void calculate_coeffcients_regular();
 	void calculate_coeffcients_log();
-	void set_initial_conditions(std::string type);
+	void set_initial_conditions(int type);
 	void calculate_non_linear_log(double t);
 	void calculate_non_linear_regular();
 	void time_step(bool first_time);
@@ -35,11 +34,9 @@ class ETD2_solver {
 	//Time variables
 	double t_start;
 	double t_end;
-	int num_of_periods;
 	double dt;
 	int t_points;
-	double t_spacing;
-	double forcing_period;
+	int t_spacing;
 
 	//Space variables
 	double L;
@@ -47,13 +44,17 @@ class ETD2_solver {
 	double dx;
 
 	//Systems Parameters
-	double ustar, omega0;
+	double ustar, vstar, omega0;
+	double mu(double t);
 	double lambda(double t);
 	double k(double t);
 	double k0;
 	double k1;
 	double n;
-	double D;
+	double Dx_u;
+	double Dy_u;
+	double Dx_v;
+	double Dy_v;
 	double alpha;
 
 	fftw_complex* u;
