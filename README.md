@@ -41,6 +41,22 @@ This can be run using the command:
 
 ``` make plot ```
 
+Fourier transform plots can be produced using:
+
+
+``` make plot_k_u ```
+
+for predators and 
+
+``` make plot_k_v ```
+
+for prey.
+
+Spatial fluctuation data can be produced using:
+
+``` make compute_std ```
+
+Note, the above make commands require data to be present in the output directory, which should automatically be generated after running "./solve"
 
 The raw output of the code is in the output directory 
 

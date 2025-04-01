@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 from multiprocessing import Pool, Value, Lock
 
-# Helper function to generate a plot for a single dataset file
+# This function processes a single file (a single time step)
 def process_file(file):
-    # Global variables for progress tracking
+    # TODO: Get rid of global variables, keeping this for now as it works, maybe this was needed for parallel processing?
     global progress_counter, lock, num_files
 
     # Extract time step from the file name
@@ -39,7 +39,7 @@ def process_file(file):
     Z_log = np.log1p(Z)  # log(1 + Z) to avoid issues with log(0)
     Z_normalized = Z_log / Z_log.max()
 
-    # Create image using a perceptually uniform colormap
+    # Create image with gray colormap
     plt.figure(figsize=(8, 8))
     im = plt.imshow(Z_normalized, origin='lower', extent=(-0.05, 0.05, -0.05, 0.05), cmap='gray')
 

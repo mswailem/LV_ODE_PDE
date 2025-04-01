@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 from multiprocessing import Pool, Value, Lock
 
-# Updated helper function to find global min and max values for even and odd frames
+# This function finds the global minimum and maximum values for u and v in even and odd frames seperately
 def find_global_min_max(files):
     even_min_u, even_max_u = float('inf'), float('-inf')
     even_min_v, even_max_v = float('inf'), float('-inf')
@@ -32,8 +32,9 @@ def find_global_min_max(files):
     
     return even_min_u, even_max_u, even_min_v, even_max_v, odd_min_u, odd_max_u, odd_min_v, odd_max_v
 
-# Update the normalization logic in process_file
+# Function that processes a single file (a single timestep)
 def process_file(file):
+    # TODO: Get rid of global variables, keeping this for now as it works, maybe this was needed for parallel processing?
     global progress_counter, lock, num_files
     global even_min_u, even_max_u, even_min_v, even_max_v
     global odd_min_u, odd_max_u, odd_min_v, odd_max_v
@@ -56,11 +57,11 @@ def process_file(file):
     yi = np.linspace(min(y), max(y), 500)
     X, Y = np.meshgrid(xi, yi)
 
-    # Interpolate red and blue intensities
+    # Interpolate red and blue intensities just so that the image is not pixelated
     Z_red = griddata(points, red_intensity, (X, Y), method='cubic')
     Z_blue = griddata(points, blue_intensity, (X, Y), method='cubic')
 
-    # Normalize using global min and max values for even and odd frames
+    # Normalize using global min and max values for even and odd frames (NOTE: This was done for a specific dataset, and may not work as nicely for other datasets)
     if t % 2 == 0:  # Even frame
         Z_blue = (Z_blue - even_min_v) / (even_max_v - even_min_v)
     else:  # Odd frame
