@@ -62,19 +62,27 @@ The raw output of the code is in the output directory
 
 This code using exponential time differencing techniques to solve the system by utilizing Fourier Transforms. 
 
-The method can be solved directly in "regular" space, or first transformed into log-coodinates and then solved in "log" space.
+The method can be solved directly in "regular" space (outdated and haven't been updated or checked in a while, not recommended to use), or first transformed into log-coodinates and then solved in "log" space.
 
-The log space method ensures that the densities stay positive, however, it seems that both methods yield similar results.
+The log space method ensures that the densities stay positive, however, it both methods yield similar results.
 
-I have implemented two initial conditions:
+I have implemented the following initial conditions:
 
-type 0: discontinous initial conditions where the initial predator and prey are laid out in a checkboard pattern (this leads to divergences in the solutions for some parameter values due to the derivative becoming too large)
+checkboard: Discontinous initial conditions where the initial predator and prey are laid out in a checkboard pattern
 
-type 1: smooth initial conditions where the initial predator and prey are distributed using sines and cosines (this seems to work without divergences)
+continous: Smooth initial conditions where the initial predator and prey are distributed using sines and cosines
+
+constant: Constant initial conditions
+
+random: Each grid point is assigned the fixed point density value of the average environment + a random number between 0 and 1e-4 (this parameter can change)
+
+Initial conditions are specified by setting the corresponding initial condition in "ETD2_solver.cpp" in the solve_in_log() function. (Not the best way to implement this but it works for now)
 
 example run:
 
 ``` ./solve 0 90 0.1 20 64 0.2 1 1 1 1 1 ```
+
+You can just run ``` ./solve ``` to see a terminal prompt that will let you know what the required arguments are.
 
 
 TODO:

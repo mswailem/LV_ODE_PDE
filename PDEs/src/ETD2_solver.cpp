@@ -401,7 +401,7 @@ void ETD2_solver::solve_in_log() {
 	calculate_coeffcients_log();
 
 	// Set initial conditions and write data at t=0
-	set_initial_conditions(std::string("checkboard"));
+	set_initial_conditions(std::string("random"));
 	write_data("0");
 	transform_to_k_space();
 	write_data("0", true);
